@@ -1,0 +1,29 @@
+{
+  "name": "typehl-converter",
+  "version": "0.1.0",
+  "description": "TypeScript → TypeHL Core Language transpiler for separation type verification",
+  "type": "module",
+  "bin": {
+    "typehl": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/cli.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typehl": "tsx src/cli.ts"
+  },
+  "dependencies": {
+    "typescript": "^5.8.3",
+    "commander": "^13.1.0",
+    "chalk": "^5.4.1"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.4",
+    "vitest": "^3.1.4",
+    "@types/node": "^22.15.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

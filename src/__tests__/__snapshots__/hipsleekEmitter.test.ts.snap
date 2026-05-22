@@ -1,0 +1,301 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`HIPsleek Emitter Snapshot Tests > should match snapshot for examples/basic.ts 1`] = `
+"/* Data declarations */
+data node {
+  int val;
+  node next;
+}
+
+data cell {
+  int val;
+}
+
+/* Functions */
+int id (int x)
+  requires true
+  ensures true & res = x;
+{
+  return x;
+}
+
+int abs (int x)
+  requires true & x >= 0
+  ensures true & res = x;
+{
+  int _t0 = 0;
+  int _cond = x >= _t0;
+  if (_cond) {
+    return x;
+  } else {
+    int _t1 = 0;
+    return _t1 - x;
+  }
+}
+"
+`;
+
+exports[`HIPsleek Emitter Snapshot Tests > should match snapshot for examples/head.ts 1`] = `
+"/* Data declarations */
+data node {
+  int val;
+  node next;
+}
+
+data cell {
+  int val;
+}
+
+/* View predicates */
+List<T> == true
+  inv true;
+List<T, n> == true & n = 0 or true & true & n = m + 1
+  inv true;
+
+/* Functions */
+int safeHead (node xs)
+  requires true & s > 0
+  ensures true;
+{
+  return xs.val;
+}
+
+node totalHead (node xs)
+  requires true
+  ensures true & true or true & true;
+{
+  int _t0 = 0;
+  int _cond = xs == _t0;
+  if (_cond) {
+    /* abort */
+  } else {
+  }
+  return xs.val;
+}
+"
+`;
+
+exports[`HIPsleek Emitter Snapshot Tests > should match snapshot for examples/length.ts 1`] = `
+"/* Data declarations */
+data node {
+  int val;
+  node next;
+}
+
+data cell {
+  int val;
+}
+
+/* View predicates */
+List<T, n> == true & n = 0 or true & true & n = m + 1
+  inv true;
+
+/* Functions */
+int length (node xs)
+  requires true
+  ensures res = n;
+{
+  int _t0 = 0;
+  int _cond = xs == _t0;
+  if (_cond) {
+  } else {
+  }
+  node t = xs.next;
+  int l = length(t);
+  int _t1 = 1;
+  return _t1 + l;
+}
+"
+`;
+
+exports[`HIPsleek Emitter Snapshot Tests > should match snapshot for examples/list_ops.ts 1`] = `
+"/* Data declarations */
+data node {
+  int val;
+  node next;
+}
+
+data cell {
+  int val;
+}
+
+/* View predicates */
+List<T, n> == true & n = 0 or true & true & n = m + 1
+  inv true;
+
+/* Functions */
+node append (node xs, node ys)
+  requires true & true & xs != null
+  ensures true;
+{
+  node next = xs.next;
+  int _t0 = 0;
+  int _cond = next == _t0;
+  if (_cond) {
+    xs.next = ys;
+  } else {
+    append(next, ys);
+  }
+  return xs;
+}
+"
+`;
+
+exports[`HIPsleek Emitter Snapshot Tests > should match snapshot for examples/map.ts 1`] = `
+"/* Data declarations */
+data node {
+  int val;
+  node next;
+}
+
+data cell {
+  int val;
+}
+
+/* Functions */
+node map (node f, node xs)
+  requires true & true
+  ensures true;
+{
+  int _t0 = 0;
+  int _cond = xs == _t0;
+  if (_cond) {
+  } else {
+  }
+  int h = xs.val;
+  node t = xs.next;
+  node fh = f(h);
+  node ft = map(f, t);
+  return new Cons(fh, ft);
+}
+"
+`;
+
+exports[`HIPsleek Emitter Snapshot Tests > should match snapshot for examples/rbtree.ts 1`] = `
+"/* Data declarations */
+data node {
+  int val;
+  node next;
+}
+
+data cell {
+  int val;
+}
+
+/* View predicates */
+RBTree<T, c, h> == true & true & h = 0
+  inv true;
+
+/* Functions */
+bool member (int key, node t)
+  requires true
+  ensures true;
+{
+  int _t0 = 0;
+  int _cond = t == _t0;
+  if (_cond) {
+  } else {
+  }
+  int v = t.val;
+  int _cond = key == v;
+  if (_cond) {
+  } else {
+  }
+  int _cond = key < v;
+  if (_cond) {
+    node left = t.left;
+    return member(key, left);
+  } else {
+    node right = t.right;
+    return member(key, right);
+  }
+}
+"
+`;
+
+exports[`HIPsleek Emitter Snapshot Tests > should match snapshot for examples/rm_head.ts 1`] = `
+"/* Data declarations */
+data node {
+  int val;
+  node next;
+}
+
+data cell {
+  int val;
+}
+
+/* View predicates */
+List<T> == true
+  inv true;
+MList<T> == true or self::Cons<T, r> * r::cell<r1> * r1::MList<T>
+  inv true;
+
+/* Functions */
+node rm_head (cell xs)
+  requires xs::cell<ys> * ys::MList<T>
+  ensures xs::cell<ys> & true & true or xs::cell<t> * t::MList<T> & true & true;
+{
+  int ys = xs.val;
+  int _t0 = 0;
+  int _cond = ys == _t0;
+  if (_cond) {
+    /* abort */
+  } else {
+  }
+  int h = ys.val;
+  node t = ys.next;
+  xs.val = t;
+  return h;
+}
+"
+`;
+
+exports[`HIPsleek Emitter Snapshot Tests > should match snapshot for examples/stateful_add.ts 1`] = `
+"/* Data declarations */
+data node {
+  int val;
+  node next;
+}
+
+data cell {
+  int val;
+}
+
+/* Functions */
+void stateful_add (cell x, cell y)
+  requires x::cell<int> * y::cell<int>
+  ensures x::cell<int> * y::cell<int>;
+{
+  int vx = x.val;
+  int vy = y.val;
+  int _t0 = vx + vy;
+  x.val = _t0;
+}
+"
+`;
+
+exports[`HIPsleek Emitter Snapshot Tests > should match snapshot for examples/swap.ts 1`] = `
+"/* Data declarations */
+data node {
+  int val;
+  node next;
+}
+
+data cell {
+  int val;
+}
+
+/* Functions */
+void swap (cell i, cell j)
+  case {
+    i != j -> requires i::cell<a> * j::cell<b> ensures i::cell<b> * j::cell<a>;
+    i = j -> requires i::cell<a> ensures i::cell<a>;
+  }
+{
+  int c = i.val;
+  int _t0 = j.val;
+  i.val = _t0;
+  j.val = c;
+}
+"
+`;
