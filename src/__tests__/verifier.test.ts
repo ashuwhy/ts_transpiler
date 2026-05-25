@@ -104,4 +104,22 @@ describe('runner', () => {
     expect(runResult.verification?.verified).toBe(false);
     expect(runResult.verification?.procedures).toEqual([{ name: 'test', status: 'FAIL' }]);
   });
+
+  it('should trust parsed successful procedures despite noisy prover stderr', async () => {
+    const execFileAsyncMock = (execFile as any)[customPromisifySymbol];
+    const err = new Error('Process exited with code 1') as any;
+    err.stdout = `
+      ERROR : fixcalc cannot be found!!
+      Checking procedure swap$cell~cell...
+      Procedure swap$cell~cell SUCCESS.
+    `;
+    err.stderr = '';
+    execFileAsyncMock.mockRejectedValue(err);
+
+    const runResult = await runHipsleek('/path/to/hip', 'swap.ss');
+    expect(runResult.success).toBe(true);
+    expect(runResult.error).toBeDefined();
+    expect(runResult.verification?.verified).toBe(true);
+    expect(runResult.verification?.procedures).toEqual([{ name: 'swap', status: 'SUCCESS' }]);
+  });
 });

@@ -34,8 +34,9 @@ export async function runHipsleek(execPath: string, filePath: string, timeoutMs 
     const stdout = err.stdout || '';
     const stderr = err.stderr || '';
     const verification = parseHipsleekOutput(stdout, stderr);
+    const parsedProcedures = verification.procedures.length > 0;
     return {
-      success: false,
+      success: parsedProcedures ? verification.verified : false,
       stdout,
       stderr,
       error: err,

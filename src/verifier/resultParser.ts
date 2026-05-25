@@ -14,11 +14,12 @@ export function parseHipsleekOutput(stdout: string, stderr: string): Verificatio
   };
 
   const lines = stdout.split('\n');
-  // Regex to match e.g.:
+  // Regex to match HIP/SLEEK variants, e.g.:
   // - "Checking procedure swap... SUCCESS"
   // - "Procedure append$node~node ... SUCCESS"
+  // - "Procedure swap$cell~cell SUCCESS."
   // - "Procedure swap$cell~cell ... FAIL"
-  const procRegex = /(?:Checking\s+)?(?:[Pp]rocedure)\s+([\w$]+)(?:[^\n.]*)\.\.\.\s*(SUCCESS|FAIL|Fail|Ok|Error)/i;
+  const procRegex = /(?:Checking\s+)?(?:[Pp]rocedure)\s+([\w$~]+).*?\b(SUCCESS|FAIL|Fail|Ok|Error)\b/i;
 
   for (const line of lines) {
     const match = line.match(procRegex);
