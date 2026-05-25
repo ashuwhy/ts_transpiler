@@ -6,3 +6,4 @@ dist/
 *.d.ts.map
 !vitest.config.ts
 .DS_Store
+TODO.md
