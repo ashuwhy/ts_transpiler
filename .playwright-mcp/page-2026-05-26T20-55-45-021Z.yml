@@ -1,0 +1,32 @@
+- generic [ref=e2]:
+  - generic [ref=e7]: tsx scripts/convert.ts examples/type_demo.ts
+  - generic [ref=e8]:
+    - generic [ref=e9]:
+      - text: ──────────────────────────────────────────────────────────
+      - text: TypeScript Input — type_demo.ts
+      - text: ──────────────────────────────────────────────────────────
+    - generic [ref=e10]:
+      - text: // examples/type_demo.ts
+      - generic [ref=e11]: /** * Add two integers. * @req x:#int /\ y:#int * @ens res:#int */
+      - text: "function plus(x: number, y: number): number { return x + y; }"
+      - generic [ref=e12]: /** * Dereference a heap cell — two equivalent specs. * @req x:#Ref[t'] * @ens res:#t' * @req x->#Ref[t'] * @ens x->#Ref[t'] /\ res:#t' */
+      - text: "function deref(x: any): any { return x.val; }"
+      - generic [ref=e13]: "/** * Mutate a ref cell: int → str. The \"killer demo\" — ownership type changes. * @req x->#Ref[int] * @ens x->#Ref[str] */"
+      - text: "function inc_inplace(x: any): void { x.val = String(x.val + 1); }"
+      - generic [ref=e14]: /** * Swap two owned heap cells — aliased + disjoint cases. * @req x->#Ref[a'] /\ x=y @ens x->#Ref[a'] /\ x=y * @req x->#Ref[a'] * y->#Ref[b'] @ens x->#Ref[b'] * y->#Ref[a'] */
+      - text: "function swap(x: any, y: any): void { /* swap vals */ }"
+      - generic [ref=e15]: /** * Tail of a list — multi-case spec with Err on Nil. * @req x:#Cons[t',List[t']] @ens res:#List[t'] * @req x:#Nil[] @ens res:#Err[] */
+      - text: "function tail(x: any): any { if (!x) throw new Error(\"empty\"); return x.next; }"
+    - generic [ref=e16]:
+      - text: ──────────────────────────────────────────────────────────
+      - text: OCaml Output — output.ml
+      - text: ──────────────────────────────────────────────────────────
+    - generic [ref=e17]: let plus x y = failwith "assume" (*@ assume req x:#int /\ y:#int; ens res:#int @*) let deref x = failwith "assume" (*@ assume req x:#Ref[t']; ens res:#t' $ req x->#Ref[t']; ens x->#Ref[t'] /\ res:#t' @*) let inc_inplace x = failwith "assume" (*@ assume req x->#Ref[int]; ens x->#Ref[str] @*) let swap x y = failwith "assume" (*@ assume req x->#Ref[a'] /\ x=y; ens x->#Ref[a'] /\ x=y $ req x->#Ref[a'] * y->#Ref[b']; ens x->#Ref[b'] * y->#Ref[a'] @*) let tail x = failwith "assume" (*@ assume req x:#Cons[t',List[t']]; ens res:#List[t'] $ req x:#Nil[]; ens res:#Err[] @*)
+    - generic [ref=e18]:
+      - text: ──────────────────────────────────────────────────────────
+      - text: Heifer-type Verification
+      - text: ──────────────────────────────────────────────────────────
+    - generic [ref=e19]:
+      - text: "Running: dune exec main/hip.exe output.ml (cwd: Heifer-type) ========== Function: plus ========== [ Given specification ] req x:int/\\y:int; ens res:int ✓ [ Entail Check ] true ========== Function: deref ========== [ Given specification ] req x:Ref[t']; ens res:t' $ req x->Ref[t']; ens x->Ref[t']/\\res:t' ✓ [ Entail Check ] true ========== Function: inc_inplace ========== [ Given specification ] req x->Ref[int]; ens x->Ref[str] ✓ [ Entail Check ] true ========== Function: swap ========== [ Given specification ] req x->Ref[a']/\\x=y; ens x->Ref[a']/\\x=y $ req x->Ref[a']*y->Ref[b']; ens x->Ref[b']*y->Ref[a'] ✓ [ Entail Check ] true ========== Function: tail ========== [ Given specification ] req x:Cons[t'; List[t']]; ens res:List[t'] $ req x:Nil[]; ens res:Err[] ✓ [ Entail Check ] true"
+      - generic [ref=e20]: ========== FINAL SUMMARY ========== [ LoC ] 17 [ Z3 ] 0.00 s | [ Why3 ] 0.00 s | [ Total ] 0.02 s
+      - text: ✅ ALL 5 SPEC(S) VERIFIED

@@ -25,6 +25,7 @@ export interface Definition {
   body: CoreExpr;
   spec: FuncSpec | null;   // null when no JSDoc annotation
   returnTypeAnnotation?: string;
+  rawSpec?: string;        // raw Heifer spec string e.g. "req x:#int ; ens res:#int"
 }
 
 /** A typed parameter — carries optional TS type annotation for the walker */

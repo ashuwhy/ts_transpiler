@@ -2556,6 +2556,14 @@
       "id": "rationale_prover_selection",
       "community": 8,
       "norm_label": "rationale: dynamic prover selection (why3 vs z3)"
+    },
+    {
+      "id": "src_emitter_heiferEmitter_ts",
+      "label": "heiferEmitter.ts",
+      "file_type": "code",
+      "source_file": "src/emitter/heiferEmitter.ts",
+      "source_location": "L1",
+      "description": "HeiferEmitter: emits OCaml .ml with (*@ spec @*) blocks for Heifer verifier"
     }
   ],
   "links": [
@@ -7898,6 +7906,16 @@
       "_tgt": "heifer_prover_why3",
       "source": "heifer_prover_why3",
       "target": "rationale_prover_selection"
+    },
+    {
+      "source": "src_emitter_heiferEmitter_ts",
+      "target": "src_emitter_emitterInterface_ts",
+      "relation": "implements"
+    },
+    {
+      "source": "src_emitter_heiferEmitter_ts",
+      "target": "src_core_ast_ts",
+      "relation": "imports"
     }
   ],
   "hyperedges": [

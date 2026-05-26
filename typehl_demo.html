@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>TypeHL → Heifer-type Demo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0d1117;
+    font-family: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #e6edf3;
+    padding: 20px;
+  }
+  .terminal {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    overflow: hidden;
+    max-width: 900px;
+    margin: 0 auto;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  }
+  .titlebar {
+    background: #21262d;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #30363d;
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot.red { background: #ff5f57; }
+  .dot.yellow { background: #febc2e; }
+  .dot.green { background: #28c840; }
+  .title { margin-left: 8px; color: #8b949e; font-size: 12px; }
+  .content { padding: 16px 20px; }
+  .banner {
+    color: #58a6ff;
+    font-weight: bold;
+    border-bottom: 1px solid #30363d;
+    padding-bottom: 6px;
+    margin: 20px 0 10px;
+    letter-spacing: 0.5px;
+  }
+  .banner:first-child { margin-top: 0; }
+  .section { margin-bottom: 8px; }
+
+  /* Syntax highlighting for TypeScript */
+  .kw   { color: #ff7b72; }
+  .fn   { color: #d2a8ff; }
+  .type { color: #79c0ff; }
+  .str  { color: #a5d6ff; }
+  .cmt  { color: #8b949e; font-style: italic; }
+  .tag  { color: #ffa657; }
+  .spec { color: #56d364; }
+  .num  { color: #79c0ff; }
+
+  /* OCaml */
+  .ocaml-kw    { color: #ff7b72; }
+  .ocaml-spec  { color: #56d364; }
+  .ocaml-spec-kw { color: #ffa657; }
+  .ocaml-fn    { color: #d2a8ff; }
+
+  /* Verification */
+  .func-header { color: #f0f6fc; font-weight: bold; margin-top: 14px; }
+  .check-pass  { color: #56d364; }
+  .check-label { color: #8b949e; }
+  .summary-hdr { color: #8b949e; margin-top: 14px; }
+  .summary-val { color: #8b949e; }
+  .final-pass  { color: #56d364; font-weight: bold; font-size: 16px; margin-top: 16px; }
+
+  pre { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<div class="terminal">
+  <div class="titlebar">
+    <div class="dot red"></div>
+    <div class="dot yellow"></div>
+    <div class="dot green"></div>
+    <span class="title">tsx scripts/convert.ts examples/type_demo.ts</span>
+  </div>
+  <div class="content">
+
+    <!-- SECTION 1: TypeScript Input -->
+    <div class="banner">──────────────────────────────────────────────────────────<br>  TypeScript Input — type_demo.ts<br>──────────────────────────────────────────────────────────</div>
+    <pre><span class="cmt">// examples/type_demo.ts</span>
+
+<span class="cmt">/**
+ * Add two integers.
+ * <span class="tag">@req</span> <span class="spec">x:#int /\ y:#int</span>
+ * <span class="tag">@ens</span> <span class="spec">res:#int</span>
+ */</span>
+<span class="kw">function</span> <span class="fn">plus</span>(<span class="type">x: number</span>, <span class="type">y: number</span>): <span class="type">number</span> {
+  <span class="kw">return</span> x + y;
+}
+
+<span class="cmt">/**
+ * Dereference a heap cell — two equivalent specs.
+ * <span class="tag">@req</span> <span class="spec">x:#Ref[t']</span>
+ * <span class="tag">@ens</span> <span class="spec">res:#t'</span>
+ * <span class="tag">@req</span> <span class="spec">x->#Ref[t']</span>
+ * <span class="tag">@ens</span> <span class="spec">x->#Ref[t'] /\ res:#t'</span>
+ */</span>
+<span class="kw">function</span> <span class="fn">deref</span>(<span class="type">x: any</span>): <span class="type">any</span> { <span class="kw">return</span> x.val; }
+
+<span class="cmt">/**
+ * Mutate a ref cell: int → str.  <b>The "killer demo" — ownership type changes.</b>
+ * <span class="tag">@req</span> <span class="spec">x->#Ref[int]</span>
+ * <span class="tag">@ens</span> <span class="spec">x->#Ref[str]</span>
+ */</span>
+<span class="kw">function</span> <span class="fn">inc_inplace</span>(<span class="type">x: any</span>): <span class="type">void</span> { x.val = String(x.val + <span class="num">1</span>); }
+
+<span class="cmt">/**
+ * Swap two owned heap cells — aliased + disjoint cases.
+ * <span class="tag">@req</span> <span class="spec">x->#Ref[a'] /\ x=y</span>  &nbsp; <span class="tag">@ens</span> <span class="spec">x->#Ref[a'] /\ x=y</span>
+ * <span class="tag">@req</span> <span class="spec">x->#Ref[a'] * y->#Ref[b']</span>  <span class="tag">@ens</span> <span class="spec">x->#Ref[b'] * y->#Ref[a']</span>
+ */</span>
+<span class="kw">function</span> <span class="fn">swap</span>(<span class="type">x: any</span>, <span class="type">y: any</span>): <span class="type">void</span> { <span class="cmt">/* swap vals */</span> }
+
+<span class="cmt">/**
+ * Tail of a list — multi-case spec with Err on Nil.
+ * <span class="tag">@req</span> <span class="spec">x:#Cons[t',List[t']]</span>  <span class="tag">@ens</span> <span class="spec">res:#List[t']</span>
+ * <span class="tag">@req</span> <span class="spec">x:#Nil[]</span>               <span class="tag">@ens</span> <span class="spec">res:#Err[]</span>
+ */</span>
+<span class="kw">function</span> <span class="fn">tail</span>(<span class="type">x: any</span>): <span class="type">any</span> { <span class="kw">if</span> (!x) <span class="kw">throw</span> <span class="kw">new</span> <span class="fn">Error</span>(<span class="str">"empty"</span>); <span class="kw">return</span> x.next; }</pre>
+
+    <!-- SECTION 2: OCaml Output -->
+    <div class="banner">──────────────────────────────────────────────────────────<br>  OCaml Output — output.ml<br>──────────────────────────────────────────────────────────</div>
+    <pre><span class="ocaml-kw">let</span> <span class="ocaml-fn">plus</span> x y = <span class="ocaml-kw">failwith</span> <span class="str">"assume"</span>
+ <span class="ocaml-spec">(*@ assume req x:#int /\ y:#int; ens res:#int @*)</span>
+
+<span class="ocaml-kw">let</span> <span class="ocaml-fn">deref</span> x = <span class="ocaml-kw">failwith</span> <span class="str">"assume"</span>
+ <span class="ocaml-spec">(*@ assume req x:#Ref[t']; ens res:#t'
+  $ req x->#Ref[t']; ens x->#Ref[t'] /\ res:#t' @*)</span>
+
+<span class="ocaml-kw">let</span> <span class="ocaml-fn">inc_inplace</span> x = <span class="ocaml-kw">failwith</span> <span class="str">"assume"</span>
+ <span class="ocaml-spec">(*@ assume req x->#Ref[int]; ens x->#Ref[str] @*)</span>
+
+<span class="ocaml-kw">let</span> <span class="ocaml-fn">swap</span> x y = <span class="ocaml-kw">failwith</span> <span class="str">"assume"</span>
+ <span class="ocaml-spec">(*@ assume req x->#Ref[a'] /\ x=y; ens x->#Ref[a'] /\ x=y
+  $ req x->#Ref[a'] * y->#Ref[b']; ens x->#Ref[b'] * y->#Ref[a'] @*)</span>
+
+<span class="ocaml-kw">let</span> <span class="ocaml-fn">tail</span> x = <span class="ocaml-kw">failwith</span> <span class="str">"assume"</span>
+ <span class="ocaml-spec">(*@ assume req x:#Cons[t',List[t']]; ens res:#List[t']
+  $ req x:#Nil[]; ens res:#Err[] @*)</span></pre>
+
+    <!-- SECTION 3: Verification -->
+    <div class="banner">──────────────────────────────────────────────────────────<br>  Heifer-type Verification<br>──────────────────────────────────────────────────────────</div>
+    <pre><span class="check-label">Running: dune exec main/hip.exe output.ml (cwd: Heifer-type)</span>
+
+<span class="func-header">========== Function: plus ==========</span>
+<span class="check-label">[ Given specification ]
+  req x:int/\y:int; ens res:int</span>
+  <span class="check-pass">✓  [ Entail Check ] true</span>
+
+<span class="func-header">========== Function: deref ==========</span>
+<span class="check-label">[ Given specification ]
+  req x:Ref[t']; ens res:t' $ req x-&gt;Ref[t']; ens x-&gt;Ref[t']/\res:t'</span>
+  <span class="check-pass">✓  [ Entail Check ] true</span>
+
+<span class="func-header">========== Function: inc_inplace ==========</span>
+<span class="check-label">[ Given specification ]
+  req x-&gt;Ref[int]; ens x-&gt;Ref[str]</span>
+  <span class="check-pass">✓  [ Entail Check ] true</span>
+
+<span class="func-header">========== Function: swap ==========</span>
+<span class="check-label">[ Given specification ]
+  req x-&gt;Ref[a']/\x=y; ens x-&gt;Ref[a']/\x=y $ req x-&gt;Ref[a']*y-&gt;Ref[b']; ens x-&gt;Ref[b']*y-&gt;Ref[a']</span>
+  <span class="check-pass">✓  [ Entail Check ] true</span>
+
+<span class="func-header">========== Function: tail ==========</span>
+<span class="check-label">[ Given specification ]
+  req x:Cons[t'; List[t']]; ens res:List[t'] $ req x:Nil[]; ens res:Err[]</span>
+  <span class="check-pass">✓  [ Entail Check ] true</span>
+
+<span class="summary-hdr">========== FINAL SUMMARY ==========
+<span class="summary-val">[   LoC   ] 17
+[    Z3   ] 0.00 s  |  [ Why3 ] 0.00 s  |  [ Total ] 0.02 s</span></span>
+
+<span class="final-pass">✅  ALL 5 SPEC(S) VERIFIED</span></pre>
+
+  </div>
+</div>
+</body>
+</html>

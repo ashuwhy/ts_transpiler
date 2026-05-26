@@ -8,6 +8,7 @@ import chalk from 'chalk';
 import { ASTWalker } from './translator/walker.js';
 import { CoreEmitter } from './emitter/coreEmitter.js';
 import { HipsleekEmitter } from './emitter/hipsleekEmitter.js';
+import { HeiferEmitter } from './emitter/heiferEmitter.js';
 import { runHipsleek } from './verifier/runner.js';
 
 const program = new Command();
@@ -49,8 +50,7 @@ program
       } else if (options.format === 'core') {
         emitter = new CoreEmitter();
       } else if (options.format === 'heifer') {
-        console.warn(chalk.yellow('[Warning] Heifer emitter is currently deferred to v2. Using reference core emitter.'));
-        emitter = new CoreEmitter();
+        emitter = new HeiferEmitter();
       } else {
         console.error(chalk.red(`[Error] Unknown format: ${options.format}`));
         process.exit(1);
