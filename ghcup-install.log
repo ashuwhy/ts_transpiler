@@ -1,0 +1,67 @@
+
+Welcome to Haskell!
+
+This script can download and install the following binaries:
+  * ghcup - The Haskell toolchain installer
+  * ghc   - The Glasgow Haskell Compiler
+  * cabal - The Cabal build tool for managing Haskell software
+  * stack - A cross-platform program for developing Haskell projects (similar to cabal)
+  * hls   - (optional) A language server for developers to integrate with their editor/IDE
+
+ghcup installs only into the following directory,
+which can be removed anytime:
+  /Users/air/.ghcup
+
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  7  128M    7  9.9M    0     0  24.2M      0  0:00:05 --:--:--  0:00:05 24.2M 38  128M   38 49.3M    0     0  34.9M      0  0:00:03  0:00:01  0:00:02 34.9M 67  128M   67 86.3M    0     0  35.8M      0  0:00:03  0:00:02  0:00:01 35.8M 95  128M   95  122M    0     0  35.9M      0  0:00:03  0:00:03 --:--:-- 35.9M100  128M  100  128M    0     0  35.9M      0  0:00:03  0:00:03 --:--:-- 35.8M
+[1m[ Info  ][0m downloading: https://raw.githubusercontent.com/haskell/ghcup-metadata/master/ghcup-0.1.0.yaml as file /Users/air/.ghcup/cache/ghcup-0.1.0.yaml
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100  647k  100  647k    0     0  1997k      0 --:--:-- --:--:-- --:--:-- 1998k
+[1m[ Info  ][0m Upgrading GHCup...
+[1m[ Warn  ][0m No GHCup update available
+
+System requirements 
+  Note: On OS X, in the course of running ghcup you will be given a dialog
+box to install the command line tools. Accept and the requirements will
+be installed for you. You will then need to run the command again.
+
+On Darwin M1 you might also need a working llvm installed (e.g. via brew)
+and have the toolchain exposed in PATH.
+
+[1m[ Info  ][0m downloading: https://downloads.haskell.org/~ghc/9.4.8/ghc-9.4.8-aarch64-apple-darwin.tar.xz as file /Users/air/.ghcup/cache/ghc-9.4.8-aarch64-apple-darwin.tar.xz
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  2  187M    2 4334k    0     0  25.5M      0  0:00:07 --:--:--  0:00:07 25.4M 23  187M   23 43.6M    0     0  37.4M      0  0:00:05  0:00:01  0:00:04 37.4M 44  187M   44 83.7M    0     0  38.6M      0  0:00:04  0:00:02  0:00:02 38.6M 64  187M   64  120M    0     0  38.1M      0  0:00:04  0:00:03  0:00:01 38.1M 83  187M   83  157M    0     0  37.7M      0  0:00:04  0:00:04 --:--:-- 37.7M100  187M  100  187M    0     0  37.2M      0  0:00:05  0:00:05 --:--:-- 37.7M
+[1m[ Info  ][0m verifying digest of: ghc-9.4.8-aarch64-apple-darwin.tar.xz
+[1m[ Info  ][0m Unpacking: ghc-9.4.8-aarch64-apple-darwin.tar.xz to /Users/air/.ghcup/tmp/ghcup-9ef5c86be831e90c
+[1m[ Info  ][0m Installing ghc
+
+
+
+
+
+
+[6A[0J
+
+
+
+
+
+[6A[0J[1m[ Info  ][0m ghc installation successful
+[1m[ Info  ][0m ghc 9.4.8 successfully set as default version
+[1m[ Info  ][0m downloading: https://downloads.haskell.org/~ghcup/unofficial-bindists/cabal/3.14.2.0/cabal-install-3.14.2.0-aarch64-apple-darwin.tar.xz as file /Users/air/.ghcup/cache/cabal-install-3.14.2.0-aarch64-apple-darwin.tar.xz
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100 12.3M  100 12.3M    0     0  25.0M      0 --:--:-- --:--:-- --:--:-- 24.9M
+[1m[ Info  ][0m verifying digest of: cabal-install-3.14.2.0-aarch64-apple-darwin.tar.xz
+[1m[ Info  ][0m Unpacking: cabal-install-3.14.2.0-aarch64-apple-darwin.tar.xz to /Users/air/.ghcup/tmp/ghcup-10303d3610a3f9c5
+[1m[ Info  ][0m Installing cabal
+[1m[ Info  ][0m cabal installation successful
+Config file path source is default config file.
+Config file not found: /Users/air/.cabal/config
+Writing default configuration to /Users/air/.cabal/config
+Downloading the latest package list from hackage.haskell.org
+terminated
+"cabal update --ignore-project" failed!
