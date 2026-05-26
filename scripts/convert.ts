@@ -28,12 +28,45 @@ interface FuncEntry {
   /** Parallel arrays: reqs[i] pairs with enss[i] as one case spec */
   reqs: string[];
   enss: string[];
+  /** Optional universal quantification prefix, e.g. "t." or "a' b'." */
+  forall?: string;
+  /** Mark as recursive — emits `let rec` */
+  isRec: boolean;
+}
+
+interface FileLevel {
+  /** (*@ pred ... @*) declarations to hoist to top of output */
+  preds: string[];
 }
 
 // ─── Parse TypeScript source ──────────────────────────────────────────
 
-function extractFunctions(src: string, filePath: string): FuncEntry[] {
+function getTagText(tag: ts.JSDocTag): string {
+  if (typeof tag.comment === 'string') return tag.comment.trim();
+  if (Array.isArray(tag.comment))
+    return (tag.comment as ts.NodeArray<ts.JSDocComment>).map(c => c.text).join('').trim();
+  return '';
+}
+
+/** Extract file-level @pred declarations from leading comments on the first node. */
+function extractFileLevel(sf: ts.SourceFile): FileLevel {
+  const preds: string[] = [];
+  const text = sf.text;
+  // Scan all leading comment ranges before the first real token
+  const ranges = ts.getLeadingCommentRanges(text, 0) ?? [];
+  for (const r of ranges) {
+    const block = text.slice(r.pos, r.end);
+    for (const line of block.split('\n')) {
+      const m = line.match(/\*\s*@pred\s+(.*)/);
+      if (m) preds.push(m[1].trim());
+    }
+  }
+  return { preds };
+}
+
+function extractFunctions(src: string, filePath: string): { fileLevel: FileLevel; entries: FuncEntry[] } {
   const sf = ts.createSourceFile(filePath, src, ts.ScriptTarget.Latest, true);
+  const fileLevel = extractFileLevel(sf);
   const entries: FuncEntry[] = [];
 
   ts.forEachChild(sf, node => {
@@ -46,51 +79,59 @@ function extractFunctions(src: string, filePath: string): FuncEntry[] {
 
     const reqs: string[] = [];
     const enss: string[] = [];
+    let forall: string | undefined;
+    let isRec = false;
 
     for (const tag of ts.getJSDocTags(node)) {
-      const tagText = typeof tag.comment === 'string'
-        ? tag.comment
-        : Array.isArray(tag.comment)
-          ? (tag.comment as ts.NodeArray<ts.JSDocComment>).map(c => c.text).join('')
-          : '';
+      const cleaned = getTagText(tag);
 
-      const cleaned = tagText.trim();
-      if (!cleaned) continue;
-
-      if (tag.tagName.text === 'req') reqs.push(cleaned);
-      else if (tag.tagName.text === 'ens') enss.push(cleaned);
+      switch (tag.tagName.text) {
+        case 'req':    if (cleaned) reqs.push(cleaned);    break;
+        case 'ens':    if (cleaned) enss.push(cleaned);    break;
+        case 'forall': forall = cleaned;                   break;
+        case 'rec':    isRec = true;                       break;
+      }
     }
 
-    // Fallback: parse from raw leading comment text (for editors that mangle tags)
+    // Fallback: parse raw leading comment text (for editors that mangle JSDoc tags)
     if (reqs.length === 0 && enss.length === 0) {
       const text = sf.text;
       const ranges = ts.getLeadingCommentRanges(text, node.pos) ?? [];
       for (const r of ranges) {
         const block = text.slice(r.pos, r.end);
         for (const line of block.split('\n')) {
-          const m = line.match(/\*\s*@(req|ens)\s+(.*)/);
-          if (m) {
-            if (m[1] === 'req') reqs.push(m[2].trim());
-            else                enss.push(m[2].trim());
-          }
+          const m = line.match(/\*\s*@(req|ens|forall|rec)\s*(.*)/);
+          if (!m) continue;
+          const val = m[2].trim();
+          if      (m[1] === 'req')    reqs.push(val);
+          else if (m[1] === 'ens')    enss.push(val);
+          else if (m[1] === 'forall') forall = val;
+          else if (m[1] === 'rec')    isRec = true;
         }
       }
     }
 
     if (reqs.length > 0 || enss.length > 0) {
-      entries.push({ name, params, reqs, enss });
+      entries.push({ name, params, reqs, enss, forall, isRec });
     }
   });
 
-  return entries;
+  return { fileLevel, entries };
 }
 
 // ─── Emit OCaml ───────────────────────────────────────────────────────
 
-function emitOCaml(entries: FuncEntry[]): string {
+function emitOCaml(fileLevel: FileLevel, entries: FuncEntry[]): string {
   const lines: string[] = [];
 
+  // File-level pred declarations
+  for (const pred of fileLevel.preds) {
+    lines.push(`(*@ pred ${pred} @*)`);
+  }
+  if (fileLevel.preds.length > 0) lines.push('');
+
   for (const fn of entries) {
+    const letKw = fn.isRec ? 'let rec' : 'let';
     const paramStr = fn.params.length > 0 ? fn.params.join(' ') : '()';
     const caseCount = Math.max(fn.reqs.length, fn.enss.length, 1);
 
@@ -101,8 +142,13 @@ function emitOCaml(entries: FuncEntry[]): string {
       cases.push(`req ${req}; ens ${ens}`);
     }
 
-    const specBody = cases.join('\n  $ ');
-    lines.push(`let ${fn.name} ${paramStr} = failwith "assume"`);
+    // forall prefix wraps all cases
+    const casesStr = cases.join('\n  $ ');
+    const specBody = fn.forall
+      ? `forall ${fn.forall} ${casesStr}`
+      : casesStr;
+
+    lines.push(`${letKw} ${fn.name} ${paramStr} = failwith "assume"`);
     lines.push(` (*@ assume ${specBody} @*)`);
     lines.push('');
   }
@@ -209,13 +255,13 @@ const src = fs.readFileSync(absInput, 'utf8');
 banner(`TypeScript Input — ${path.basename(absInput)}`);
 console.log(src.trimEnd());
 
-const entries = extractFunctions(src, absInput);
+const { fileLevel, entries } = extractFunctions(src, absInput);
 if (entries.length === 0) {
   console.error(`\n${RED}No @req/@ens annotations found in ${inputFile}${RESET}`);
   process.exit(1);
 }
 
-const ocaml = emitOCaml(entries);
+const ocaml = emitOCaml(fileLevel, entries);
 fs.mkdirSync(OUTPUT_SUBDIR, { recursive: true });
 fs.writeFileSync(OUTPUT_ML, ocaml);
 
