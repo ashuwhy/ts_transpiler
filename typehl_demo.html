@@ -107,7 +107,7 @@
 <span class="kw">function</span> <span class="fn">deref</span>(<span class="type">x: any</span>): <span class="type">any</span> { <span class="kw">return</span> x.val; }
 
 <span class="cmt">/**
- * Mutate a ref cell: int → str.  <b>The "killer demo" — ownership type changes.</b>
+ * Mutate a ref cell: int → str.  <b>Core type mutation demo.</b>
  * <span class="tag">@req</span> <span class="spec">x->#Ref[int]</span>
  * <span class="tag">@ens</span> <span class="spec">x->#Ref[str]</span>
  */</span>
@@ -154,33 +154,33 @@
 <span class="func-header">========== Function: plus ==========</span>
 <span class="check-label">[ Given specification ]
   req x:int/\y:int; ens res:int</span>
-  <span class="check-pass">✓  [ Entail Check ] true</span>
+  <span class="check-pass">[PASS] [ Entail Check ] true</span>
 
 <span class="func-header">========== Function: deref ==========</span>
 <span class="check-label">[ Given specification ]
   req x:Ref[t']; ens res:t' $ req x-&gt;Ref[t']; ens x-&gt;Ref[t']/\res:t'</span>
-  <span class="check-pass">✓  [ Entail Check ] true</span>
+  <span class="check-pass">[PASS] [ Entail Check ] true</span>
 
 <span class="func-header">========== Function: inc_inplace ==========</span>
 <span class="check-label">[ Given specification ]
   req x-&gt;Ref[int]; ens x-&gt;Ref[str]</span>
-  <span class="check-pass">✓  [ Entail Check ] true</span>
+  <span class="check-pass">[PASS] [ Entail Check ] true</span>
 
 <span class="func-header">========== Function: swap ==========</span>
 <span class="check-label">[ Given specification ]
   req x-&gt;Ref[a']/\x=y; ens x-&gt;Ref[a']/\x=y $ req x-&gt;Ref[a']*y-&gt;Ref[b']; ens x-&gt;Ref[b']*y-&gt;Ref[a']</span>
-  <span class="check-pass">✓  [ Entail Check ] true</span>
+  <span class="check-pass">[PASS] [ Entail Check ] true</span>
 
 <span class="func-header">========== Function: tail ==========</span>
 <span class="check-label">[ Given specification ]
   req x:Cons[t'; List[t']]; ens res:List[t'] $ req x:Nil[]; ens res:Err[]</span>
-  <span class="check-pass">✓  [ Entail Check ] true</span>
+  <span class="check-pass">[PASS] [ Entail Check ] true</span>
 
 <span class="summary-hdr">========== FINAL SUMMARY ==========
 <span class="summary-val">[   LoC   ] 17
 [    Z3   ] 0.00 s  |  [ Why3 ] 0.00 s  |  [ Total ] 0.02 s</span></span>
 
-<span class="final-pass">✅  ALL 5 SPEC(S) VERIFIED</span></pre>
+<span class="final-pass">ALL 5 SPEC(S) VERIFIED</span></pre>
 
   </div>
 </div>

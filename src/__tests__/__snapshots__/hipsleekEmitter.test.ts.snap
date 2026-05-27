@@ -299,3 +299,250 @@ void swap (cell i, cell j)
 }
 "
 `;
+
+exports[`HIPsleek Emitter Snapshot Tests > should match snapshot for examples/type_demo.ts 1`] = `
+"/* Data declarations */
+data node {
+  int val;
+  node next;
+}
+
+data cell {
+  int val;
+}
+
+/* Functions */
+int plus (int x, int y)
+{
+  return x + y;
+}
+
+node deref (node x)
+{
+  int _t0 = 0;
+  return _t0.val;
+}
+
+void inc_inplace (node x)
+{
+  int _t2 = 0;
+  int _t3 = 1;
+  int _t1 = _t2 + _t3;
+  node _t0 = String(_t1);
+  x.val = _t0;
+}
+
+void swap (node x, node y)
+{
+  int v1 = x.val;
+  int v2 = y.val;
+  x.val = v2;
+  y.val = v1;
+}
+
+node tail (node x)
+{
+  int _t0 = 0;
+  int _cond = x == _t0;
+  if (_cond) {
+    /* abort */
+  } else {
+  }
+  return x.next;
+}
+"
+`;
+
+exports[`HIPsleek Emitter Snapshot Tests > should match snapshot for examples/type_demo_full.ts 1`] = `
+"/* Data declarations */
+data node {
+  int val;
+  node next;
+}
+
+data cell {
+  int val;
+}
+
+/* Functions */
+node id2 (node y)
+{
+  return y;
+}
+
+node pred_id (node x)
+{
+  return x;
+}
+
+node pred_unfold (node y)
+{
+  return y;
+}
+
+node pred_fold (node x)
+{
+  return x;
+}
+
+node pred_mixed_req (node y)
+{
+  return y;
+}
+
+node pred_mixed_ens (node y)
+{
+  return y;
+}
+
+int plus (int x, int y)
+{
+  return x + y;
+}
+
+node apply (node f, node x)
+{
+  return f(x);
+}
+
+node deref (node x)
+{
+  int _t0 = 0;
+  return _t0.val;
+}
+
+node tail (node x)
+{
+  int _t0 = 0;
+  int _cond = x == _t0;
+  if (_cond) {
+    /* abort */
+  } else {
+  }
+  return x.next;
+}
+
+node inc_if_int (node y)
+{
+  int _t0 = 0;
+  node _t1 = number;
+  int _cond = _t0 == _t1;
+  if (_cond) {
+    int _t2 = 1;
+    y + _t2;
+  } else {
+  }
+  return y;
+}
+
+node string_of_ints (int x)
+{
+  return String(x);
+}
+
+void inc_inplace (node x)
+{
+  int _t0 = 0;
+  int _t4 = 0;
+  int _t3 = _t4.val;
+  int _t5 = 1;
+  int _t2 = _t3 + _t5;
+  node _t1 = string_of_ints(_t2);
+  _t0.val = _t1;
+}
+
+node make_ref (node x)
+{
+  return 0;
+}
+
+void update (node m, node v)
+{
+  int _t0 = 0;
+  _t0.val = v;
+}
+
+void swap (node x, node y)
+{
+  int _t0 = 0;
+  int v1 = _t0.val;
+  int _t1 = 0;
+  int v2 = _t1.val;
+  int _t2 = 0;
+  _t2.val = v2;
+  int _t3 = 0;
+  _t3.val = v1;
+}
+
+void swap_mixed (node x, node y)
+{
+  return swap(x, y);
+}
+
+node list_seg (node x)
+{
+  return x;
+}
+
+node list_entail (node y)
+{
+  return list_seg(y);
+}
+
+void two_pointer (node x, node y, node _z)
+{
+  int _t0 = 0;
+  _t0.val = y;
+}
+
+node check_spec_completeness (node x)
+{
+  return tail(x);
+}
+
+node map (node f, node xs)
+{
+  int _cond = 0;
+  if (_cond) {
+  } else {
+  }
+  return 0;
+}
+
+node more_args (node f, node x, node y)
+{
+  return f(x)(y);
+}
+
+node partial_app (int x)
+{
+  return 0;
+}
+
+node maplist_int_string (node l, node f)
+{
+  return map(f, l);
+}
+"
+`;
+
+exports[`HIPsleek Emitter Snapshot Tests > should match snapshot for examples/unsound_inc.ts 1`] = `
+"/* Data declarations */
+data node {
+  int val;
+  node next;
+}
+
+data cell {
+  int val;
+}
+
+/* Functions */
+node inc (node c)
+{
+  int _t0 = c.val;
+  int _t1 = 1;
+  return op_+=(_t0, _t1);
+}
+"
+`;

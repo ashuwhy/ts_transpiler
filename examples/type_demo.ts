@@ -23,7 +23,7 @@ function deref(x: any): any {
 }
 
 /**
- * Mutate a ref cell: int → str.  The "killer demo" — ownership type changes.
+ * Mutate a ref cell: int → str.  Core demonstration of ownership type change.
  * @req x->#Ref[int]
  * @ens x->#Ref[str]
  */

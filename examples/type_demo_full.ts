@@ -128,7 +128,7 @@ function inc_if_int(y: any): any {
  */
 function string_of_ints(x: number): string { return String(x); }
 
-// ─── 9. Type mutation — the "killer demo" ─────────────────────────────
+// ─── 9. Type mutation — core type mutation demo ────────────────────────
 
 /**
  * Mutate heap cell type from int to str.  TypeScript forbids this; Heifer tracks it.

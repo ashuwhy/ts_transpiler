@@ -33,7 +33,7 @@ tsx scripts/convert.ts examples/type_demo_full.ts
 
 ---
 
-## The Three Killer Examples
+## Key Expressiveness Examples
 
 ### 1. `inc_inplace` — Ownership Type Change
 ```typescript

@@ -1,13 +1,13 @@
-# TypeHL Converter
+# TypeHL for TypeScript: A Separation Logic Front-End
 
-> TypeScript → TypeHL Core Language transpiler, with a HIPsleek `.ss` back-end and a stubbed verifier driver. Reference implementation for the *Sep-Types* paper (Figures 2 & 3).
+> **Research Prototype:** A TypeScript → OCaml (Heifer) separation logic pipeline.
+> This repository serves as a reference implementation for demonstrating separation logic types on real-world, mainstream programming languages, building upon the principles of *Sep-Types*.
 
-`typehl` reads a TypeScript file annotated with JSDoc spec tags (`@requires`, `@ensures`, `@case`, `@pred`, `@forall`) and produces either:
+**TypeHL for TypeScript** provides a web-based and CLI front-end for annotating standard TypeScript with structural separation-logic specifications. It parses JSDoc-based invariants (`@req`, `@ens`) on TypeScript functions, maps them to an intermediate core language, and compiles these specifications into OCaml stubs verified by the Heifer separation-logic backend.
 
-1. **Paper notation** — the core language printed verbatim from Figure 2 / Figure 3 (for debugging and human review), or
-2. **HIPsleek `.ss`** — runnable separation-logic specs in the format `./hip` consumes.
+This system demonstrates that rigorous separation logic can be applied to an existing ecosystem (TypeScript) to statically prevent issues like unsound aliasing, without sacrificing the language's familiar developer experience.
 
-A Heifer `.ml` emitter is on the roadmap but deferred to v2: Heifer verifies effect traces, not separation types, so the paper's separation-type examples don't round-trip meaningfully.
+---
 
 ---
 
