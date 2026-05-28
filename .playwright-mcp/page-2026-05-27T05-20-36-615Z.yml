@@ -1,0 +1,445 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - navigation [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]: TypeHL
+        - generic [ref=e6]:
+          - link "Demo" [ref=e7] [cursor=pointer]:
+            - /url: "#demo"
+          - link "Patterns" [ref=e8] [cursor=pointer]:
+            - /url: "#patterns"
+          - link "Compare" [ref=e9] [cursor=pointer]:
+            - /url: "#compare"
+    - generic [ref=e11]:
+      - generic [ref=e12]:
+        - generic [ref=e13]: TypeScript → OCaml → Separation Logic
+        - generic [ref=e14]: 25 / 25 entail checks ✓
+      - heading "TypeHL" [level=1] [ref=e15]
+      - paragraph [ref=e16]:
+        - text: Annotate TypeScript with
+        - code [ref=e17]: "@req"
+        - text: /
+        - code [ref=e18]: "@ens"
+        - text: specs
+      - paragraph [ref=e19]: Get Heifer-type separation logic verification that TypeScript cannot express
+      - generic [ref=e20]:
+        - generic [ref=e25]: tsx scripts/convert.ts examples/type_demo.ts
+        - generic [ref=e26]:
+          - generic [ref=e27]: ✓ plus [ Entail Check ] true
+          - generic [ref=e28]: ✓ deref [ Entail Check ] true
+          - generic [ref=e29]: ✓ inc_inplace [ Entail Check ] true
+          - generic [ref=e30]: ✓ swap [ Entail Check ] true
+          - generic [ref=e31]: ✓ tail [ Entail Check ] true
+          - generic [ref=e32]: ✅ ALL 5 SPEC(S) VERIFIED
+      - generic [ref=e33]:
+        - generic [ref=e34]: Heap ownership
+        - generic [ref=e35]: Separating conjunction
+        - generic [ref=e36]: Type mutation
+        - generic [ref=e37]: Aliasing analysis
+        - generic [ref=e38]: Parametric polymorphism
+        - generic [ref=e39]: ADT dispatch
+    - generic [ref=e428]:
+      - generic [ref=e429]:
+        - heading "Live Demo" [level=2] [ref=e430]
+        - paragraph [ref=e431]:
+          - text: Edit TypeScript with
+          - code [ref=e432]: "@req"
+          - text: /
+          - code [ref=e433]: "@ens"
+          - text: JSDoc tags, then click Verify to run the full Heifer-type pipeline.
+      - generic [ref=e434]:
+        - combobox [ref=e435]:
+          - option "Quick demo (3 functions)" [selected]
+          - option "plus — Value types"
+          - option "deref — Heap ownership"
+          - option "inc_inplace — Type-state / ownership mutation"
+          - option "swap — Separation / aliasing"
+          - option "tail — ADT dispatch / error types"
+          - option "id2 — Parametric polymorphism"
+          - option "make_ref — Heap allocation"
+          - option "update — Type mutation"
+          - option "list_seg — List structure"
+          - option "map — Recursive polymorphism"
+          - option "partial_app — Higher-order / partial application"
+          - option "two_pointer — Pointer aliasing"
+        - button "▶ Verify" [ref=e436]
+      - generic [ref=e437]:
+        - generic [ref=e438]:
+          - generic [ref=e439]:
+            - generic [ref=e440]: TypeScript Input
+            - generic [ref=e441]: .ts
+          - textbox [ref=e442]: "// TypeHL Live Demo // Edit the specs below and click Verify /** * Add two integers. * @req x:#int /\\ y:#int * @ens res:#int */ function plus(x: number, y: number): number { return x + y; } /** * Mutate heap cell type from int to str. * @req x->#Ref[int] * @ens x->#Ref[str] */ function inc_inplace(x: any): void { (x as any).val = String((x as any).val + 1); } /** * Swap two refs — aliased and disjoint cases. * @req x->#Ref[a'] /\\ x=y * @ens x->#Ref[a'] /\\ x=y * @req x->#Ref[a'] * y->#Ref[b'] * @ens x->#Ref[b'] * y->#Ref[a'] */ function swap(x: any, y: any): void { const v1 = (x as any).val; const v2 = (y as any).val; (x as any).val = v2; (y as any).val = v1; }"
+        - generic [ref=e443]:
+          - generic [ref=e444]:
+            - generic [ref=e445]:
+              - generic [ref=e446]: Emitted OCaml
+              - generic [ref=e447]: .ml
+            - generic [ref=e448]: Click Verify to see emitted OCaml stubs
+          - generic [ref=e449]:
+            - generic [ref=e450]: Heifer-type Results
+            - generic [ref=e451]: Results appear here after verification
+    - generic [ref=e67]:
+      - generic [ref=e68]:
+        - heading "The Three Killer Examples" [level=2] [ref=e69]
+        - paragraph [ref=e70]: Cases where TypeScript fundamentally cannot express what Heifer-type verifies
+      - generic [ref=e71]:
+        - generic [ref=e72]:
+          - generic [ref=e73]:
+            - generic [ref=e74]: Type Mutation
+            - heading "inc_inplace" [level=3] [ref=e75]
+            - paragraph [ref=e76]: TypeScript type-checks snapshots, not state transitions. It either rejects the typed version or loses all type info with any.
+          - generic [ref=e77]:
+            - generic [ref=e78]:
+              - generic [ref=e79]: TypeScript REJECTS or loses type info
+              - generic [ref=e80]: "// TS: type error OR unconstrained any function inc_inplace(x: { val: number }): void { // Error: string not assignable to number x.val = String(x.val + 1); }"
+            - generic [ref=e81]:
+              - generic [ref=e82]: Heifer-type VERIFIES — tracks type change
+              - generic [ref=e83]: let inc_inplace x = failwith "assume" (*@ assume req x->#Ref[int]; ens x->#Ref[str] @*)
+          - generic [ref=e84]: "Key insight: Ref[int] before → Ref[str] after. TypeScript has no concept of type-state."
+        - generic [ref=e85]:
+          - generic [ref=e86]:
+            - generic [ref=e87]: Aliasing Split
+            - heading "swap(x, x) vs swap(x, y)" [level=3] [ref=e88]
+            - paragraph [ref=e89]: "TypeScript gives both calls the same type. Heifer separates them: disjoint ownership (*) vs aliased case (x=y)."
+          - generic [ref=e90]:
+            - generic [ref=e91]:
+              - generic [ref=e92]: "TypeScript: same type for both calls"
+              - generic [ref=e93]: "// TS: swap(x, x) and swap(x, y) // are completely indistinguishable function swap(x: any, y: any): void { const t = x.val; x.val = y.val; y.val = t; }"
+            - generic [ref=e94]:
+              - generic [ref=e95]: "Heifer-type: two separate verified cases"
+              - generic [ref=e96]: let swap x y = failwith "assume" (*@ assume req x->#Ref[a'] /\ x=y; ens x->#Ref[a'] /\ x=y $ req x->#Ref[a'] * y->#Ref[b']; ens x->#Ref[b'] * y->#Ref[a'] @*)
+          - generic [ref=e97]: "Key insight: * is separating conjunction — asserts x and y are disjoint heap locations."
+        - generic [ref=e98]:
+          - generic [ref=e99]:
+            - generic [ref=e100]: Deep Structure
+            - heading "list_seg" [level=3] [ref=e101]
+            - paragraph [ref=e102]: TypeScript treats all arrays as T[] with no structural constraints. Heifer reasons about exact linked-list shapes and entails them to abstract predicates.
+          - generic [ref=e103]:
+            - generic [ref=e104]:
+              - generic [ref=e105]: "TypeScript: just any[]"
+              - generic [ref=e106]: "// TS: no structural constraints at all // x is just \"any\" — could be anything function list_seg(x: any): any { return x; }"
+            - generic [ref=e107]:
+              - generic [ref=e108]: "Heifer-type: 6 structural cases verified"
+              - generic [ref=e109]: let list_seg x = failwith "assume" (*@ assume req x->#Cons[int,y] * y->#Cons[int,z] * z->#Cons[int,Nil[]]; ens x->#List[int] /\ res=x $ req x->#Cons[1,y] * y->#Cons[2,z] * z->#Cons[3,Nil[]]; ens x->#List[int] /\ res=x @*)
+          - generic [ref=e110]: "Key insight: Heifer proves that a concrete 3-element Cons chain entails the abstract List[int] predicate."
+    - generic [ref=e113]:
+      - generic [ref=e114]:
+        - heading "All Spec Patterns" [level=2] [ref=e115]
+        - paragraph [ref=e116]: 12 functions covering every separation-logic pattern in Heifer-type's test suite
+      - generic [ref=e117]:
+        - generic [ref=e118]:
+          - generic [ref=e119]:
+            - generic [ref=e120]:
+              - code [ref=e121]: plus
+              - paragraph [ref=e122]: Simple integer addition with precise types
+            - generic [ref=e123]:
+              - generic [ref=e124]: Value types
+              - generic [ref=e125]: TS imprecise
+          - generic [ref=e126]: let plus x y = failwith "assume" (*@ assume req x:#int /\ y:#int; ens res:#int @*)
+          - generic [ref=e127]: "✓ Heifer: Verifies: both inputs and output are int"
+        - generic [ref=e128]:
+          - generic [ref=e129]:
+            - generic [ref=e130]:
+              - code [ref=e131]: deref
+              - paragraph [ref=e132]: Dereference — heap form vs value form
+            - generic [ref=e133]:
+              - generic [ref=e134]: Heap ownership
+              - generic [ref=e135]: TS imprecise
+          - generic [ref=e136]: let deref x = failwith "assume" (*@ assume req x:#Ref[t']; ens res:#t' $ req x->#Ref[t']; ens x->#Ref[t'] /\ res:#t' @*)
+          - generic [ref=e137]: "✓ Heifer: Two cases: value-form and heap-ownership-form — both verified"
+        - generic [ref=e138]:
+          - generic [ref=e139]:
+            - generic [ref=e140]:
+              - code [ref=e141]: inc_inplace
+              - paragraph [ref=e142]: Type mutation — int cell becomes str cell
+            - generic [ref=e143]:
+              - generic [ref=e144]: Type-state / ownership mutation
+              - generic [ref=e145]: TS rejects
+          - generic [ref=e146]: let inc_inplace x = failwith "assume" (*@ assume req x->#Ref[int]; ens x->#Ref[str] @*)
+          - generic [ref=e147]: "✓ Heifer: Tracks type change: Ref[int] → Ref[str] across the call"
+        - generic [ref=e148]:
+          - generic [ref=e149]:
+            - generic [ref=e150]:
+              - code [ref=e151]: swap
+              - paragraph [ref=e152]: Aliased vs disjoint heap — separating conjunction
+            - generic [ref=e153]:
+              - generic [ref=e154]: Separation / aliasing
+              - generic [ref=e155]: TS unsound
+          - generic [ref=e156]: let swap x y = failwith "assume" (*@ assume req x->#Ref[a'] /\ x=y; ens x->#Ref[a'] /\ x=y $ req x->#Ref[a'] * y->#Ref[b']; ens x->#Ref[b'] * y->#Ref[a'] @*)
+          - generic [ref=e157]: "✓ Heifer: * asserts disjoint heap; aliased case handled separately"
+        - generic [ref=e158]:
+          - generic [ref=e159]:
+            - generic [ref=e160]:
+              - code [ref=e161]: tail
+              - paragraph [ref=e162]: List tail — multi-case spec with Err on Nil
+            - generic [ref=e163]:
+              - generic [ref=e164]: ADT dispatch / error types
+              - generic [ref=e165]: TS imprecise
+          - generic [ref=e166]: let tail x = failwith "assume" (*@ assume req x:#Cons[t',List[t']]; ens res:#List[t'] $ req x:#Nil[]; ens res:#Err[] @*)
+          - generic [ref=e167]: "✓ Heifer: Proves exhaustive case split: Cons returns List, Nil returns Err"
+        - generic [ref=e168]:
+          - generic [ref=e169]:
+            - generic [ref=e170]:
+              - code [ref=e171]: id2
+              - paragraph [ref=e172]: Parametric identity — forall quantifier
+            - generic [ref=e173]:
+              - generic [ref=e174]: Parametric polymorphism
+              - generic [ref=e175]: TS imprecise
+          - generic [ref=e176]: let id2 y = failwith "assume" (*@ assume forall t. req y:#t'; ens res:#t' @*)
+          - generic [ref=e177]: "✓ Heifer: forall t proves the spec holds for every type, not just syntactically"
+        - generic [ref=e178]:
+          - generic [ref=e179]:
+            - generic [ref=e180]:
+              - code [ref=e181]: make_ref
+              - paragraph [ref=e182]: Allocate a new heap cell — ownership creation
+            - generic [ref=e183]:
+              - generic [ref=e184]: Heap allocation
+              - generic [ref=e185]: TS imprecise
+          - generic [ref=e186]: let make_ref x = failwith "assume" (*@ assume req x:#a'; ens res->#Ref[x] /\ x:#a' @*)
+          - generic [ref=e187]: "✓ Heifer: res owns a fresh heap cell containing exactly x — TypeScript can't express ownership"
+        - generic [ref=e188]:
+          - generic [ref=e189]:
+            - generic [ref=e190]:
+              - code [ref=e191]: update
+              - paragraph [ref=e192]: Type-changing store — m changes from t' to a'
+            - generic [ref=e193]:
+              - generic [ref=e194]: Type mutation
+              - generic [ref=e195]: TS unsound
+          - generic [ref=e196]: let update m v = failwith "assume" (*@ assume req m->#Ref[t'] /\ v:#a'; ens m->#Ref[a'] @*)
+          - generic [ref=e197]: "✓ Heifer: m's cell type changes from t' to a' — a type-state transition"
+        - generic [ref=e198]:
+          - generic [ref=e199]:
+            - generic [ref=e200]:
+              - code [ref=e201]: list_seg
+              - paragraph [ref=e202]: Three-element list segment — deep structural reasoning
+            - generic [ref=e203]:
+              - generic [ref=e204]: List structure
+              - generic [ref=e205]: TS imprecise
+          - generic [ref=e206]: let list_seg x = failwith "assume" (*@ assume req x->#Cons[int,y] * y->#Cons[int,z] * z->#Cons[int,Nil[]]; ens x->#List[int] /\ res=x $ req x->#Cons[1,y] * y->#Cons[2,z] * z->#Cons[3,Nil[]]; ens x->#List[int] /\ res=x $ req x->#Nil[]; ens x->#List[a'] /\ res = x @*)
+          - generic [ref=e207]: "✓ Heifer: Reasons about concrete list shapes, exact values, and entailment to List[int]"
+        - generic [ref=e208]:
+          - generic [ref=e209]:
+            - generic [ref=e210]:
+              - code [ref=e211]: map
+              - paragraph [ref=e212]: Higher-order map — recursive, polymorphic, heap and value forms
+            - generic [ref=e213]:
+              - generic [ref=e214]: Recursive polymorphism
+              - generic [ref=e215]: TS imprecise
+          - generic [ref=e216]: let rec map f xs = failwith "assume" (*@ assume req f:#Any /\ xs:#Nil[]; ens res:#Nil[] $ req f:#(a'->b') /\ xs:#Cons[a',List[a']]; ens res:#Cons[b',List[b']] @*)
+          - generic [ref=e217]: "✓ Heifer: Proves list structure is preserved: Cons[a'] in → Cons[b'] out"
+        - generic [ref=e218]:
+          - generic [ref=e219]:
+            - generic [ref=e220]:
+              - code [ref=e221]: partial_app
+              - paragraph [ref=e222]: Partial application — function type as first-class constraint
+            - generic [ref=e223]:
+              - generic [ref=e224]: Higher-order / partial application
+              - generic [ref=e225]: TS imprecise
+          - generic [ref=e226]: let partial_app x = failwith "assume" (*@ assume req plus:#(int->int->int) /\ x:#int; ens res:#int->int @*)
+          - generic [ref=e227]: "✓ Heifer: Function types are logical constraints, not just annotations"
+        - generic [ref=e228]:
+          - generic [ref=e229]:
+            - generic [ref=e230]:
+              - code [ref=e231]: two_pointer
+              - paragraph [ref=e232]: Pointer-to-pointer aliasing — x now points to y's cell
+            - generic [ref=e233]:
+              - generic [ref=e234]: Pointer aliasing
+              - generic [ref=e235]: TS unsound
+          - generic [ref=e236]: let two_pointer x y = failwith "assume" (*@ assume req x->#Ref[a'] * y->#Ref[b']; ens x->#Ref[Ref[b']] $ req x->#Ref[a'] /\ x=y; ens x->#Ref[y] /\ x=y @*)
+          - generic [ref=e237]: "✓ Heifer: x->#Ref[Ref[b']] expresses pointer-to-pointer — TypeScript has no such type"
+    - generic [ref=e240]:
+      - generic [ref=e241]:
+        - heading "TypeScript vs Heifer-type" [level=2] [ref=e242]
+        - paragraph [ref=e243]: 15 patterns where TypeScript falls short — and how Heifer-type's separation logic fills the gap
+      - table [ref=e245]:
+        - rowgroup [ref=e246]:
+          - row "# Pattern TypeScript Heifer-type spec Why TypeScript fails" [ref=e247]:
+            - columnheader "#" [ref=e248]
+            - columnheader "Pattern" [ref=e249]
+            - columnheader "TypeScript" [ref=e250]
+            - columnheader "Heifer-type spec" [ref=e251]
+            - columnheader "Why TypeScript fails" [ref=e252]
+        - rowgroup [ref=e253]:
+          - 'row "1 Parametric identity <T>(y: T): T — syntactic, not verified forall t. req y:#t''; ens res:#t'' TS checks syntax; Heifer proves the heap entailment holds" [ref=e254]':
+            - cell "1" [ref=e255]
+            - cell "Parametric identity" [ref=e256]
+            - 'cell "<T>(y: T): T — syntactic, not verified" [ref=e257]':
+              - code [ref=e258]: "<T>(y: T): T"
+              - text: — syntactic, not verified
+            - cell "forall t. req y:#t'; ens res:#t'" [ref=e259]:
+              - code [ref=e260]: forall t. req y:#t'; ens res:#t'
+            - cell "TS checks syntax; Heifer proves the heap entailment holds" [ref=e261]
+          - row "2 Predicate fold/unfold No concept — TS has no named heap predicates req p_list(x); ens res=x /\\ p_list(x) TS cannot abstract over heap shapes" [ref=e262]:
+            - cell "2" [ref=e263]
+            - cell "Predicate fold/unfold" [ref=e264]
+            - cell "No concept — TS has no named heap predicates" [ref=e265]
+            - cell "req p_list(x); ens res=x /\\ p_list(x)" [ref=e266]:
+              - code [ref=e267]: req p_list(x); ens res=x /\ p_list(x)
+            - cell "TS cannot abstract over heap shapes" [ref=e268]
+          - 'row "3 Heap vs value duality deref(x: any): any — loses type info req x->#Ref[t'']; ens x->#Ref[t''] /\\ res:#t'' TS erases the distinction between heap cells and values" [ref=e269]':
+            - cell "3" [ref=e270]
+            - cell "Heap vs value duality" [ref=e271]
+            - 'cell "deref(x: any): any — loses type info" [ref=e272]':
+              - code [ref=e273]: "deref(x: any): any"
+              - text: — loses type info
+            - cell "req x->#Ref[t']; ens x->#Ref[t'] /\\ res:#t'" [ref=e274]:
+              - code [ref=e275]: req x->#Ref[t']; ens x->#Ref[t'] /\ res:#t'
+            - cell "TS erases the distinction between heap cells and values" [ref=e276]
+          - row "4 Type mutation Forbids typed mutation; accepts untyped any req x->#Ref[int]; ens x->#Ref[str] TS checks snapshots; Heifer tracks state transitions" [ref=e277]:
+            - cell "4" [ref=e278]
+            - cell "Type mutation" [ref=e279]
+            - cell "Forbids typed mutation; accepts untyped any" [ref=e280]:
+              - text: Forbids typed mutation; accepts untyped
+              - code [ref=e281]: any
+            - cell "req x->#Ref[int]; ens x->#Ref[str]" [ref=e282]:
+              - code [ref=e283]: req x->#Ref[int]; ens x->#Ref[str]
+            - cell "TS checks snapshots; Heifer tracks state transitions" [ref=e284]
+          - 'row "5 Aliasing split swap(x: any, y: any) — no aliasing detection req x->#Ref[a''] /\\ x=y; ens x->#Ref[a''] /\\ x=y TS cannot express disjoint vs aliased ownership" [ref=e285]':
+            - cell "5" [ref=e286]
+            - cell "Aliasing split" [ref=e287]
+            - 'cell "swap(x: any, y: any) — no aliasing detection" [ref=e288]':
+              - code [ref=e289]: "swap(x: any, y: any)"
+              - text: — no aliasing detection
+            - cell "req x->#Ref[a'] /\\ x=y; ens x->#Ref[a'] /\\ x=y" [ref=e290]:
+              - code [ref=e291]: req x->#Ref[a'] /\ x=y; ens x->#Ref[a'] /\ x=y
+            - cell "TS cannot express disjoint vs aliased ownership" [ref=e292]
+          - row "6 Disjoint ownership Same type as aliased — indistinguishable req x->#Ref[a'] * y->#Ref[b']; ens x->#Ref[b'] * y->#Ref[a'] * is separating conjunction — TS has no analog" [ref=e293]:
+            - cell "6" [ref=e294]
+            - cell "Disjoint ownership" [ref=e295]
+            - cell "Same type as aliased — indistinguishable" [ref=e296]
+            - cell "req x->#Ref[a'] * y->#Ref[b']; ens x->#Ref[b'] * y->#Ref[a']" [ref=e297]:
+              - code [ref=e298]: req x->#Ref[a'] * y->#Ref[b']; ens x->#Ref[b'] * y->#Ref[a']
+            - cell "* is separating conjunction — TS has no analog" [ref=e299]:
+              - code [ref=e300]: "*"
+              - text: is separating conjunction — TS has no analog
+          - row "7 ADT constructor dispatch typeof narrows syntactically, no verification req y:#Int[int]; ens res:#Int[int] $ req y:#Str[str]; ens res:#Str[str] Heifer proves the match is exhaustive and each arm correct" [ref=e301]:
+            - cell "7" [ref=e302]
+            - cell "ADT constructor dispatch" [ref=e303]
+            - cell "typeof narrows syntactically, no verification" [ref=e304]:
+              - code [ref=e305]: typeof
+              - text: narrows syntactically, no verification
+            - cell "req y:#Int[int]; ens res:#Int[int] $ req y:#Str[str]; ens res:#Str[str]" [ref=e306]:
+              - code [ref=e307]: req y:#Int[int]; ens res:#Int[int] $ req y:#Str[str]; ens res:#Str[str]
+            - cell "Heifer proves the match is exhaustive and each arm correct" [ref=e308]
+          - 'row "8 Disjunctive return type T | Error — accepts x: null without warning req x:#Cons[...]; ens res:#List[t''] $ req x:#Nil[]; ens res:#Err[] Spec precisely models the failure case" [ref=e309]':
+            - cell "8" [ref=e310]
+            - cell "Disjunctive return type" [ref=e311]
+            - 'cell "T | Error — accepts x: null without warning" [ref=e312]':
+              - code [ref=e313]: T | Error
+              - text: — accepts
+              - code [ref=e314]: "x: null"
+              - text: without warning
+            - cell "req x:#Cons[...]; ens res:#List[t'] $ req x:#Nil[]; ens res:#Err[]" [ref=e315]:
+              - code [ref=e316]: req x:#Cons[...]; ens res:#List[t'] $ req x:#Nil[]; ens res:#Err[]
+            - cell "Spec precisely models the failure case" [ref=e317]
+          - row "9 List segment shape any[] or T[] — no structural constraint req x->#Cons[int,y] * y->#Cons[int,z] * z->#Cons[int,Nil[]] TS length/structure is runtime; Heifer reasons statically" [ref=e318]:
+            - cell "9" [ref=e319]
+            - cell "List segment shape" [ref=e320]
+            - cell "any[] or T[] — no structural constraint" [ref=e321]:
+              - code [ref=e322]: any[]
+              - text: or
+              - code [ref=e323]: T[]
+              - text: — no structural constraint
+            - cell "req x->#Cons[int,y] * y->#Cons[int,z] * z->#Cons[int,Nil[]]" [ref=e324]:
+              - code [ref=e325]: req x->#Cons[int,y] * y->#Cons[int,z] * z->#Cons[int,Nil[]]
+            - cell "TS length/structure is runtime; Heifer reasons statically" [ref=e326]
+          - 'row "10 Create reference + ownership make_ref<T>(x: T): {val: T} — correct but no ownership req x:#a''; ens res->#Ref[x] /\\ x:#a'' TS cannot express that res owns a new heap cell" [ref=e327]':
+            - cell "10" [ref=e328]
+            - cell "Create reference + ownership" [ref=e329]
+            - 'cell "make_ref<T>(x: T): {val: T} — correct but no ownership" [ref=e330]':
+              - code [ref=e331]: "make_ref<T>(x: T): {val: T}"
+              - text: — correct but no ownership
+            - cell "req x:#a'; ens res->#Ref[x] /\\ x:#a'" [ref=e332]:
+              - code [ref=e333]: req x:#a'; ens res->#Ref[x] /\ x:#a'
+            - cell "TS cannot express that res owns a new heap cell" [ref=e334]:
+              - text: TS cannot express that
+              - code [ref=e335]: res
+              - text: owns a new heap cell
+          - 'row "11 Type-changing update update(m: {val: any}, v: any) — unconstrained req m->#Ref[t''] /\\ v:#a''; ens m->#Ref[a''] TS cannot express that m''s cell type changes after update" [ref=e336]':
+            - cell "11" [ref=e337]
+            - cell "Type-changing update" [ref=e338]
+            - 'cell "update(m: {val: any}, v: any) — unconstrained" [ref=e339]':
+              - code [ref=e340]: "update(m: {val: any}, v: any)"
+              - text: — unconstrained
+            - cell "req m->#Ref[t'] /\\ v:#a'; ens m->#Ref[a']" [ref=e341]:
+              - code [ref=e342]: req m->#Ref[t'] /\ v:#a'; ens m->#Ref[a']
+            - cell "TS cannot express that m's cell type changes after update" [ref=e343]
+          - 'row "12 Two-pointer aliasing (x: any, y: any) => x.val = y — no pointer type req x->#Ref[a''] * y->#Ref[b'']; ens x->#Ref[Ref[b'']] TS cannot state that x now points to y''s heap location" [ref=e344]':
+            - cell "12" [ref=e345]
+            - cell "Two-pointer aliasing" [ref=e346]
+            - 'cell "(x: any, y: any) => x.val = y — no pointer type" [ref=e347]':
+              - code [ref=e348]: "(x: any, y: any) => x.val = y"
+              - text: — no pointer type
+            - cell "req x->#Ref[a'] * y->#Ref[b']; ens x->#Ref[Ref[b']]" [ref=e349]:
+              - code [ref=e350]: req x->#Ref[a'] * y->#Ref[b']; ens x->#Ref[Ref[b']]
+            - cell "TS cannot state that x now points to y's heap location" [ref=e351]
+          - 'row "13 Completeness (x: any): any — return type imprecise req x:#List[a'']; ens res:#(List[a''] \\/ Err[]) TS unions are syntactic; Heifer proves exhaustiveness" [ref=e352]':
+            - cell "13" [ref=e353]
+            - cell "Completeness" [ref=e354]
+            - 'cell "(x: any): any — return type imprecise" [ref=e355]':
+              - code [ref=e356]: "(x: any): any"
+              - text: — return type imprecise
+            - cell "req x:#List[a']; ens res:#(List[a'] \\/ Err[])" [ref=e357]:
+              - code [ref=e358]: req x:#List[a']; ens res:#(List[a'] \/ Err[])
+            - cell "TS unions are syntactic; Heifer proves exhaustiveness" [ref=e359]
+          - 'row "14 Recursive map types map<A,B>(f:(a:A)=>B, xs:A[]): B[] — shallow Four cases: Nil/Cons × value/heap — both verified TS doesn''t verify list structure is preserved" [ref=e360]':
+            - cell "14" [ref=e361]
+            - cell "Recursive map types" [ref=e362]
+            - 'cell "map<A,B>(f:(a:A)=>B, xs:A[]): B[] — shallow" [ref=e363]':
+              - code [ref=e364]: "map<A,B>(f:(a:A)=>B, xs:A[]): B[]"
+              - text: — shallow
+            - 'cell "Four cases: Nil/Cons × value/heap — both verified" [ref=e365]'
+            - cell "TS doesn't verify list structure is preserved" [ref=e366]
+          - 'row "15 Partial application partial_app(x: number) => (y: number) => number req plus:#(int->int->int) /\\ x:#int; ens res:#int->int Heifer specs constrain function types in the logic" [ref=e367]':
+            - cell "15" [ref=e368]
+            - cell "Partial application" [ref=e369]
+            - 'cell "partial_app(x: number) => (y: number) => number" [ref=e370]':
+              - code [ref=e371]: "partial_app(x: number) => (y: number) => number"
+            - cell "req plus:#(int->int->int) /\\ x:#int; ens res:#int->int" [ref=e372]:
+              - code [ref=e373]: req plus:#(int->int->int) /\ x:#int; ens res:#int->int
+            - cell "Heifer specs constrain function types in the logic" [ref=e374]
+      - generic [ref=e375]:
+        - heading "Spec Syntax Reference" [level=3] [ref=e376]
+        - generic [ref=e377]:
+          - generic [ref=e378]:
+            - code [ref=e379]: x:#int
+            - generic [ref=e380]: x evaluates to an int
+          - generic [ref=e381]:
+            - code [ref=e382]: x->#Ref[int]
+            - generic [ref=e383]: x points to a heap cell holding int
+          - generic [ref=e384]:
+            - code [ref=e385]: P * Q
+            - generic [ref=e386]: P and Q on disjoint heap regions
+          - generic [ref=e387]:
+            - code [ref=e388]: P /\ Q
+            - generic [ref=e389]: P and Q (same heap)
+          - generic [ref=e390]:
+            - code [ref=e391]: P \/ Q
+            - generic [ref=e392]: P or Q holds
+          - generic [ref=e393]:
+            - code [ref=e394]: P $ Q
+            - generic [ref=e395]: "case split: P OR Q (multi-spec)"
+          - generic [ref=e396]:
+            - code [ref=e397]: req P; ens Q
+            - generic [ref=e398]: precondition P, postcondition Q
+          - generic [ref=e399]:
+            - code [ref=e400]: forall t.
+            - generic [ref=e401]: universal type quantifier
+          - generic [ref=e402]:
+            - code [ref=e403]: "#Ref[t']"
+            - generic [ref=e404]: heap cell holding type t'
+          - generic [ref=e405]:
+            - code [ref=e406]: "#List[t']"
+            - generic [ref=e407]: abstract list predicate
+          - generic [ref=e408]:
+            - code [ref=e409]: "#Cons[h,t]"
+            - generic [ref=e410]: "constructor node: head h, tail t"
+          - generic [ref=e411]:
+            - code [ref=e412]: "#Nil[]"
+            - generic [ref=e413]: empty list / nil constructor
+    - generic [ref=e415]:
+      - text: TypeHL · TypeScript → Heifer-type separation logic verification ·
+      - code [ref=e416]: tsx scripts/convert.ts examples/type_demo_full.ts
+  - button "Open Next.js Dev Tools" [ref=e422] [cursor=pointer]:
+    - img [ref=e423]
+  - alert [ref=e426]
