@@ -15,15 +15,15 @@ let inc_inplace x
 = let _t0 = !x in
 let _t1 = (_t0 + 1) in
 let _t2 = (string_of_int _t1) in
-(x := Obj.magic _t2)
+(x := _t2)
 
 let swap x y
 (*@ req x->#Ref[a'] /\\ x=y; ens x->#Ref[a'] /\\ x=y
   $ req x->#Ref[a'] * y->#Ref[b']; ens x->#Ref[b'] * y->#Ref[a'] @*)
 = let v1 = !x in
 let v2 = !y in
-(x := Obj.magic v2);
-(y := Obj.magic v1)`
+(x := v2);
+(y := v1)`
 
 type OcamlMode = "stub" | "impl"
 

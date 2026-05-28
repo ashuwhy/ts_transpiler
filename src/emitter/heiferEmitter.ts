@@ -268,7 +268,9 @@ export class HeiferEmitter implements Emitter {
         const rhs = this.emitExpr(expr.value, depth);
         const rest = this.emitExpr(expr.body, depth);
         if (expr.bind === '_') {
-          return `${rhs};\n${indent}${rest}`;
+          // Parenthesize rhs so a trailing match arm doesn't absorb the semicolon
+          const needsParens = rhs.includes('\n') || rhs.trimStart().startsWith('match ');
+          return `${needsParens ? `(${rhs})` : rhs};\n${indent}${rest}`;
         }
         return `let ${expr.bind} = ${rhs} in\n${indent}${rest}`;
       }
@@ -337,9 +339,8 @@ export class HeiferEmitter implements Emitter {
     if (func === 'op_!' && args.length === 1) return `(not ${args[0]})`;
 
     // Field read/write: .val is OCaml ref dereference/assignment
-    // Obj.magic is needed for type-changing stores (e.g. int ref -> str ref)
     if (func === 'read_field_val' && args.length === 1) return `!${args[0]}`;
-    if (func === 'write_field_val' && args.length === 2) return `(${args[0]} := Obj.magic ${args[1]})`;
+    if (func === 'write_field_val' && args.length === 2) return `(${args[0]} := ${args[1]})`;
 
     // List traversal fields
     if (func === 'read_field_next' && args.length === 1) return `(List.tl ${args[0]})`;

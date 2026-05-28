@@ -76,7 +76,7 @@ function inc_inplace(x: any): void {
 }`,
     ocamlSpec: `let inc_inplace x = failwith "assume"
  (*@ assume req x->#Ref[int]; ens x->#Ref[str] @*)`,
-    implOcaml: `let inc_inplace x\n(*@ req x->#Ref[int]; ens x->#Ref[str] @*)\n= let _t0 = !x in\nlet _t1 = (_t0 + 1) in\nlet _t2 = (string_of_int _t1) in\n(x := Obj.magic _t2)`,
+    implOcaml: `let inc_inplace x\n(*@ req x->#Ref[int]; ens x->#Ref[str] @*)\n= let _t0 = !x in\nlet _t1 = (_t0 + 1) in\nlet _t2 = (string_of_int _t1) in\n(x := _t2)`,
     tsVerdict: "rejects",
     heiferVerdict: "Tracks type change: Ref[int] → Ref[str] across the call",
     cached: { passed: ["inc_inplace"], failed: [] },
@@ -103,7 +103,7 @@ function swap(x: any, y: any): void {
     ocamlSpec: `let swap x y = failwith "assume"
  (*@ assume req x->#Ref[a'] /\\ x=y; ens x->#Ref[a'] /\\ x=y
   $ req x->#Ref[a'] * y->#Ref[b']; ens x->#Ref[b'] * y->#Ref[a'] @*)`,
-    implOcaml: `let swap x y\n(*@ req x->#Ref[a'] /\\ x=y; ens x->#Ref[a'] /\\ x=y\n  $ req x->#Ref[a'] * y->#Ref[b']; ens x->#Ref[b'] * y->#Ref[a'] @*)\n= let v1 = !x in\nlet v2 = !y in\n(x := Obj.magic v2);\n(y := Obj.magic v1)`,
+    implOcaml: `let swap x y\n(*@ req x->#Ref[a'] /\\ x=y; ens x->#Ref[a'] /\\ x=y\n  $ req x->#Ref[a'] * y->#Ref[b']; ens x->#Ref[b'] * y->#Ref[a'] @*)\n= let v1 = !x in\nlet v2 = !y in\n(x := v2);\n(y := v1)`,
     tsVerdict: "unsound",
     heiferVerdict: "* asserts disjoint heap; aliased case handled separately",
     cached: { passed: ["swap"], failed: [] },
@@ -182,7 +182,7 @@ function make_ref(x: any): any { return { val: x }; }`,
 function update(m: any, v: any): void { (m as any).val = v; }`,
     ocamlSpec: `let update m v = failwith "assume"
  (*@ assume req m->#Ref[t'] /\\ v:#a'; ens m->#Ref[a'] @*)`,
-    implOcaml: `let update m v\n(*@ req m->#Ref[t'] /\\ v:#a'; ens m->#Ref[a'] @*)\n= (m := Obj.magic v)`,
+    implOcaml: `let update m v\n(*@ req m->#Ref[t'] /\\ v:#a'; ens m->#Ref[a'] @*)\n= (m := v)`,
     tsVerdict: "unsound",
     heiferVerdict: "m's cell type changes from t' to a' — a type-state transition",
     cached: { passed: ["update"], failed: [] },
@@ -272,7 +272,7 @@ function two_pointer(x: any, y: any, _z: any): void {
     ocamlSpec: `let two_pointer x y = failwith "assume"
  (*@ assume req x->#Ref[a'] * y->#Ref[b']; ens x->#Ref[Ref[b']]
   $ req x->#Ref[a'] /\\ x=y; ens x->#Ref[y] /\\ x=y @*)`,
-    implOcaml: `let two_pointer x y\n(*@ req x->#Ref[a'] * y->#Ref[b']; ens x->#Ref[Ref[b']]\n  $ req x->#Ref[a'] /\\ x=y; ens x->#Ref[y] /\\ x=y @*)\n= (x := Obj.magic y)`,
+    implOcaml: `let two_pointer x y\n(*@ req x->#Ref[a'] * y->#Ref[b']; ens x->#Ref[Ref[b']]\n  $ req x->#Ref[a'] /\\ x=y; ens x->#Ref[y] /\\ x=y @*)\n= (x := y)`,
     tsVerdict: "unsound",
     heiferVerdict: "x->#Ref[Ref[b']] expresses pointer-to-pointer — TypeScript has no such type",
     cached: { passed: ["two_pointer"], failed: [] },

@@ -68,13 +68,15 @@ export class ANFConverter {
         const bindings: { varName: string; expr: CoreExpr }[] = [];
         const normArgs = expr.args.map(arg => {
           const argExpr = arg as unknown as CoreExpr;
-          if (argExpr.kind === 'Var') {
-            return argExpr.name;
+          if (argExpr.kind === 'Var') return argExpr.name;
+          // Inline numeric/boolean literals directly; strings go through emitter for special cases
+          if (argExpr.kind === 'Const' && typeof argExpr.value !== 'string') {
+            return typeof argExpr.value === 'boolean' ? String(argExpr.value) : String(argExpr.value);
           }
           const normArg = this.toANF(argExpr);
-          // If normalization reduced to a Var (e.g. transparent Cast), inline directly
-          if (normArg.kind === 'Var') {
-            return normArg.name;
+          if (normArg.kind === 'Var') return normArg.name;
+          if (normArg.kind === 'Const' && typeof normArg.value !== 'string') {
+            return String(normArg.value);
           }
           const v = this.freshVar();
           bindings.push({ varName: v, expr: normArg });
