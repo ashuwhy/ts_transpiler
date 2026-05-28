@@ -79,39 +79,27 @@ export class ASTWalker {
 
     // Extract specs
     const specs = extractJSDocSpecs(node, this.sourceFile);
-    let funcSpec: FuncSpec | null = null;
 
-    if (specs.requires.length > 0 || specs.ensures.length > 0 || specs.cases.length > 0 || specs.foralls.length > 0) {
-      try {
-        // Synthesize single spec
-        let specStr = '';
-        if (specs.foralls.length > 0) {
-          specStr += `forall ${specs.foralls.join(', ')}. `;
-        }
-        if (specs.cases.length > 0) {
-          specStr += `{ ${specs.cases.join(', ')} }`;
-        } else {
-          const req = specs.requires.join(' & ') || 'true';
-          const ens = specs.ensures.join(' & ') || 'true';
-          specStr += `requires ${req} ensures ${ens}`;
-        }
-
-        const paramNames = params.map(p => p.name);
-        const parsedSpec = SpecParser.parseSpecStr(specStr, 'res');
-        
-        // Wrap quantifiers
-        let quantifiers: any[] = [];
-        if (specs.foralls.length > 0) {
-          // Parse quantifiers list
-          const parser = new SpecParser([]); // dummy
-          quantifiers = specs.foralls.flatMap(f => f.split(',').map(v => AST.quantVar(v.trim())));
-        }
-
-        funcSpec = AST.funcSpec(quantifiers, paramNames, 'res', parsedSpec);
-      } catch (err: any) {
-        console.warn(`[Warning] Failed to parse specifications for function ${name}: ${err.message}`);
+    // Build rawSpec directly in Heifer format — bypass SpecParser which doesn't handle #type syntax
+    let rawSpec: string | undefined;
+    if (specs.requires.length > 0 || specs.ensures.length > 0) {
+      const caseCount = Math.max(specs.requires.length, specs.ensures.length, 1);
+      const cases: string[] = [];
+      for (let i = 0; i < caseCount; i++) {
+        const req = specs.requires[i];
+        const ens = specs.ensures[i];
+        const parts: string[] = [];
+        if (req) parts.push(`req ${req}`);
+        if (ens) parts.push(`ens ${ens}`);
+        cases.push(parts.join('; '));
       }
+      const casesStr = cases.join('\n  $ ');
+      rawSpec = specs.foralls.length > 0
+        ? `forall ${specs.foralls[0]} ${casesStr}`
+        : casesStr;
     }
+
+    const funcSpec: FuncSpec | null = null;
 
     // Parse body
     let bodyExpr: CoreExpr = AST.constExpr(0); // default fallback
@@ -123,7 +111,7 @@ export class ASTWalker {
     const anfBody = anfConverter.convert(bodyExpr);
 
     const returnTypeAnnotation = node.type ? node.type.getText(this.sourceFile) : undefined;
-    return AST.def(name, params, anfBody, funcSpec, returnTypeAnnotation);
+    return AST.def(name, params, anfBody, funcSpec, returnTypeAnnotation, rawSpec);
   }
 
   private walkBlock(node: ts.Block): CoreExpr {
@@ -182,7 +170,7 @@ export class ASTWalker {
       const thenExpr = ts.isBlock(thenBranch) ? this.walkBlock(thenBranch) : this.walkStatements(ts.factory.createNodeArray([thenBranch]), 0);
       const elseExpr = elseBranch
         ? (ts.isBlock(elseBranch) ? this.walkBlock(elseBranch) : this.walkStatements(ts.factory.createNodeArray([elseBranch]), 0))
-        : AST.constExpr(0);
+        : AST.varExpr('()');
 
       let ifExpr: CoreExpr;
       // If condition is `x instanceof T`, translate to pattern match!
@@ -222,6 +210,15 @@ export class ASTWalker {
   }
 
   private walkExpression(node: ts.Expression): CoreExpr {
+    if (ts.isParenthesizedExpression(node)) {
+      return this.walkExpression(node.expression);
+    }
+
+    if (node.kind === ts.SyntaxKind.NullKeyword ||
+        node.kind === ts.SyntaxKind.UndefinedKeyword) {
+      return AST.constExpr('null');
+    }
+
     if (ts.isIdentifier(node)) {
       const name = node.text;
       if (name === 'undefined' || name === 'null') return AST.constExpr('null');
@@ -252,6 +249,26 @@ export class ASTWalker {
         func: `read_field_${prop}`,
         args: [obj] as any
       };
+    }
+
+    // Object literals: {val: x} → ref x; {val: h, next: t} → h :: t (cons)
+    if (ts.isObjectLiteralExpression(node)) {
+      const props: Record<string, CoreExpr> = {};
+      for (const prop of node.properties) {
+        if (ts.isPropertyAssignment(prop)) {
+          const key = prop.name.getText(this.sourceFile);
+          props[key] = this.walkExpression(prop.initializer);
+        }
+      }
+      if (props['val'] && props['next']) {
+        // Cons cell: head :: tail
+        return { kind: 'Call', func: 'cons_cell', args: [props['val'], props['next']] as any };
+      }
+      if (props['val']) {
+        // Heap ref allocation: ref val
+        return { kind: 'Call', func: 'ref', args: [props['val']] as any };
+      }
+      return AST.constExpr(0);
     }
 
     if (ts.isNewExpression(node)) {
@@ -294,6 +311,22 @@ export class ASTWalker {
       } catch {
         return this.walkExpression(expr);
       }
+    }
+
+    // `!expr` — truthy negation; in TypeHL context usually a null/empty check
+    if (ts.isPrefixUnaryExpression(node) &&
+        node.operator === ts.SyntaxKind.ExclamationToken) {
+      const inner = this.walkExpression(node.operand);
+      return { kind: 'Call', func: 'not_truthy', args: [inner] as any };
+    }
+
+    // Arrow function `(x) => body` — emit as OCaml fun
+    if (ts.isArrowFunction(node)) {
+      const params = node.parameters.map(p => p.name.getText(this.sourceFile));
+      const body = ts.isBlock(node.body)
+        ? this.walkBlock(node.body as ts.Block)
+        : this.walkExpression(node.body as ts.Expression);
+      return AST.lambdaExpr(params, body, null as any);
     }
 
     if (ts.isBinaryExpression(node)) {

@@ -256,8 +256,8 @@ export const AST = {
     ({ kind: 'Program', predicates, definitions }),
 
   // Definitions
-  def: (name: string, params: Param[], body: CoreExpr, spec: FuncSpec | null, returnTypeAnnotation?: string): Definition =>
-    ({ kind: 'Definition', name, params, body, spec, returnTypeAnnotation }),
+  def: (name: string, params: Param[], body: CoreExpr, spec: FuncSpec | null, returnTypeAnnotation?: string, rawSpec?: string): Definition =>
+    ({ kind: 'Definition', name, params, body, spec, returnTypeAnnotation, rawSpec }),
 
   param: (name: string, typeAnnotation?: string): Param =>
     ({ name, typeAnnotation }),

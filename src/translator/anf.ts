@@ -43,13 +43,16 @@ export class ANFConverter {
       case 'Constr': {
         const bindings: { varName: string; expr: CoreExpr }[] = [];
         const normArgs = expr.args.map(arg => {
-          // In walker.ts, args might temporarily be nested expressions
           const argExpr = arg as unknown as CoreExpr;
           if (argExpr.kind === 'Var') {
             return argExpr.name;
           }
+          const normArg = this.toANF(argExpr);
+          if (normArg.kind === 'Var') {
+            return normArg.name;
+          }
           const v = this.freshVar();
-          bindings.push({ varName: v, expr: this.toANF(argExpr) });
+          bindings.push({ varName: v, expr: normArg });
           return v;
         });
 
@@ -68,8 +71,13 @@ export class ANFConverter {
           if (argExpr.kind === 'Var') {
             return argExpr.name;
           }
+          const normArg = this.toANF(argExpr);
+          // If normalization reduced to a Var (e.g. transparent Cast), inline directly
+          if (normArg.kind === 'Var') {
+            return normArg.name;
+          }
           const v = this.freshVar();
-          bindings.push({ varName: v, expr: this.toANF(argExpr) });
+          bindings.push({ varName: v, expr: normArg });
           return v;
         });
 
@@ -82,13 +90,8 @@ export class ANFConverter {
       }
 
       case 'Cast': {
-        const argExpr = expr.arg as unknown as CoreExpr;
-        if (argExpr.kind === 'Var') {
-          return AST.castExpr(expr.targetType, argExpr.name);
-        }
-        const v = this.freshVar();
-        const normArg = this.toANF(argExpr);
-        return this.makeLet(v, normArg, AST.castExpr(expr.targetType, v));
+        // Cast is transparent in OCaml — skip the wrapper and normalize inner directly
+        return this.toANF(expr.arg as unknown as CoreExpr);
       }
 
       case 'Match': {

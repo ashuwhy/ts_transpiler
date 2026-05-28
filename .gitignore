@@ -7,3 +7,5 @@ dist/
 !vitest.config.ts
 .DS_Store
 TODO.md
+.vercel
+.env*.local

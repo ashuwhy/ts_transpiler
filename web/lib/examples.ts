@@ -10,6 +10,7 @@ export interface Example {
   pattern: string
   tsCode: string
   ocamlSpec: string
+  implOcaml: string
   tsVerdict: "rejects" | "imprecise" | "unsound"
   heiferVerdict: string
   cached: CachedResult
@@ -31,6 +32,7 @@ function plus(x: number, y: number): number {
 }`,
     ocamlSpec: `let plus x y = failwith "assume"
  (*@ assume req x:#int /\\ y:#int; ens res:#int @*)`,
+    implOcaml: `let plus x y\n(*@ req x:#int /\\ y:#int; ens res:#int @*)\n= (x + y)`,
     tsVerdict: "imprecise",
     heiferVerdict: "Verifies: both inputs and output are int",
     cached: { passed: ["plus"], failed: [] },
@@ -53,6 +55,7 @@ function deref(x: any): any {
     ocamlSpec: `let deref x = failwith "assume"
  (*@ assume req x:#Ref[t']; ens res:#t'
   $ req x->#Ref[t']; ens x->#Ref[t'] /\\ res:#t' @*)`,
+    implOcaml: `let deref x\n(*@ req x:#Ref[t']; ens res:#t'\n  $ req x->#Ref[t']; ens x->#Ref[t'] /\\ res:#t' @*)\n= !x`,
     tsVerdict: "imprecise",
     heiferVerdict: "Two cases: value-form and heap-ownership-form — both verified",
     cached: { passed: ["deref"], failed: [] },
@@ -73,6 +76,7 @@ function inc_inplace(x: any): void {
 }`,
     ocamlSpec: `let inc_inplace x = failwith "assume"
  (*@ assume req x->#Ref[int]; ens x->#Ref[str] @*)`,
+    implOcaml: `let inc_inplace x\n(*@ req x->#Ref[int]; ens x->#Ref[str] @*)\n= let _t0 = !x in\nlet _t1 = (_t0 + 1) in\nlet _t2 = (string_of_int _t1) in\n(x := Obj.magic _t2)`,
     tsVerdict: "rejects",
     heiferVerdict: "Tracks type change: Ref[int] → Ref[str] across the call",
     cached: { passed: ["inc_inplace"], failed: [] },
@@ -99,6 +103,7 @@ function swap(x: any, y: any): void {
     ocamlSpec: `let swap x y = failwith "assume"
  (*@ assume req x->#Ref[a'] /\\ x=y; ens x->#Ref[a'] /\\ x=y
   $ req x->#Ref[a'] * y->#Ref[b']; ens x->#Ref[b'] * y->#Ref[a'] @*)`,
+    implOcaml: `let swap x y\n(*@ req x->#Ref[a'] /\\ x=y; ens x->#Ref[a'] /\\ x=y\n  $ req x->#Ref[a'] * y->#Ref[b']; ens x->#Ref[b'] * y->#Ref[a'] @*)\n= let v1 = !x in\nlet v2 = !y in\n(x := Obj.magic v2);\n(y := Obj.magic v1)`,
     tsVerdict: "unsound",
     heiferVerdict: "* asserts disjoint heap; aliased case handled separately",
     cached: { passed: ["swap"], failed: [] },
@@ -122,6 +127,7 @@ function tail(x: any): any {
     ocamlSpec: `let tail x = failwith "assume"
  (*@ assume req x:#Cons[t',List[t']]; ens res:#List[t']
   $ req x:#Nil[]; ens res:#Err[] @*)`,
+    implOcaml: `let tail x\n(*@ req x:#Cons[t',List[t']]; ens res:#List[t']\n  $ req x:#Nil[]; ens res:#Err[] @*)\n= let _t0 = [] in\nlet _cond = (x = _t0) in\nmatch _cond with\n  | true -> raise (Failure "err")\n  | false -> ();\n(List.tl x)`,
     tsVerdict: "imprecise",
     heiferVerdict: "Proves exhaustive case split: Cons returns List, Nil returns Err",
     cached: { passed: ["tail"], failed: [] },
@@ -140,6 +146,7 @@ function tail(x: any): any {
 function id2(y: any): any { return y; }`,
     ocamlSpec: `let id2 y = failwith "assume"
  (*@ assume forall t. req y:#t'; ens res:#t' @*)`,
+    implOcaml: `let id2 y\n(*@ forall t. req y:#t'; ens res:#t' @*)\n= y`,
     tsVerdict: "imprecise",
     heiferVerdict: "forall t proves the spec holds for every type, not just syntactically",
     cached: { passed: ["id2"], failed: [] },
@@ -157,6 +164,7 @@ function id2(y: any): any { return y; }`,
 function make_ref(x: any): any { return { val: x }; }`,
     ocamlSpec: `let make_ref x = failwith "assume"
  (*@ assume req x:#a'; ens res->#Ref[x] /\\ x:#a' @*)`,
+    implOcaml: `let make_ref x\n(*@ req x:#a'; ens res->#Ref[x] /\\ x:#a' @*)\n= (ref x)`,
     tsVerdict: "imprecise",
     heiferVerdict: "res owns a fresh heap cell containing exactly x — TypeScript can't express ownership",
     cached: { passed: ["make_ref"], failed: [] },
@@ -174,6 +182,7 @@ function make_ref(x: any): any { return { val: x }; }`,
 function update(m: any, v: any): void { (m as any).val = v; }`,
     ocamlSpec: `let update m v = failwith "assume"
  (*@ assume req m->#Ref[t'] /\\ v:#a'; ens m->#Ref[a'] @*)`,
+    implOcaml: `let update m v\n(*@ req m->#Ref[t'] /\\ v:#a'; ens m->#Ref[a'] @*)\n= (m := Obj.magic v)`,
     tsVerdict: "unsound",
     heiferVerdict: "m's cell type changes from t' to a' — a type-state transition",
     cached: { passed: ["update"], failed: [] },
@@ -197,6 +206,7 @@ function list_seg(x: any): any { return x; }`,
  (*@ assume req x->#Cons[int,y] * y->#Cons[int,z] * z->#Cons[int,Nil[]]; ens x->#List[int] /\\ res=x
   $ req x->#Cons[1,y] * y->#Cons[2,z] * z->#Cons[3,Nil[]]; ens x->#List[int] /\\ res=x
   $ req x->#Nil[]; ens x->#List[a'] /\\ res = x @*)`,
+    implOcaml: `let list_seg x\n(*@ req x->#Cons[int,y] * y->#Cons[int,z] * z->#Cons[int,Nil[]]; ens x->#List[int] /\\ res=x @*)\n= x`,
     tsVerdict: "imprecise",
     heiferVerdict: "Reasons about concrete list shapes, exact values, and entailment to List[int]",
     cached: { passed: ["list_seg"], failed: [] },
@@ -221,6 +231,7 @@ function map(f: any, xs: any): any {
     ocamlSpec: `let rec map f xs = failwith "assume"
  (*@ assume req f:#Any /\\ xs:#Nil[]; ens res:#Nil[]
   $ req f:#(a'->b') /\\ xs:#Cons[a',List[a']]; ens res:#Cons[b',List[b']] @*)`,
+    implOcaml: `let rec map f xs\n(*@ req f:#Any /\\ xs:#Nil[]; ens res:#Nil[]\n  $ req f:#(a'->b') /\\ xs:#Cons[a',List[a']]; ens res:#Cons[b',List[b']] @*)\n= let _cond = (xs = []) in\nmatch _cond with\n  | true -> []\n  | false -> ();\nlet _t0 = (List.hd xs) in\nlet _t1 = (f _t0) in\nlet _t2 = (List.tl xs) in\nlet _t3 = (map f _t2) in\n(_t1 :: _t3)`,
     tsVerdict: "imprecise",
     heiferVerdict: "Proves list structure is preserved: Cons[a'] in → Cons[b'] out",
     cached: { passed: ["map"], failed: [] },
@@ -238,6 +249,7 @@ function map(f: any, xs: any): any {
 function partial_app(x: number): any { return (y: number) => x + y; }`,
     ocamlSpec: `let partial_app x = failwith "assume"
  (*@ assume req plus:#(int->int->int) /\\ x:#int; ens res:#int->int @*)`,
+    implOcaml: `let partial_app x\n(*@ req plus:#(int->int->int) /\\ x:#int; ens res:#int->int @*)\n= (fun y -> (x + y))`,
     tsVerdict: "imprecise",
     heiferVerdict: "Function types are logical constraints, not just annotations",
     cached: { passed: ["partial_app"], failed: [] },
@@ -260,6 +272,7 @@ function two_pointer(x: any, y: any, _z: any): void {
     ocamlSpec: `let two_pointer x y = failwith "assume"
  (*@ assume req x->#Ref[a'] * y->#Ref[b']; ens x->#Ref[Ref[b']]
   $ req x->#Ref[a'] /\\ x=y; ens x->#Ref[y] /\\ x=y @*)`,
+    implOcaml: `let two_pointer x y\n(*@ req x->#Ref[a'] * y->#Ref[b']; ens x->#Ref[Ref[b']]\n  $ req x->#Ref[a'] /\\ x=y; ens x->#Ref[y] /\\ x=y @*)\n= (x := Obj.magic y)`,
     tsVerdict: "unsound",
     heiferVerdict: "x->#Ref[Ref[b']] expresses pointer-to-pointer — TypeScript has no such type",
     cached: { passed: ["two_pointer"], failed: [] },

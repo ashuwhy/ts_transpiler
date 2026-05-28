@@ -253,6 +253,7 @@ export class HeiferEmitter implements Emitter {
         return expr.name;
 
       case 'Const':
+        if (expr.value === 'null') return '[]';
         if (typeof expr.value === 'string') return `"${expr.value}"`;
         if (typeof expr.value === 'boolean') return expr.value ? 'true' : 'false';
         return String(expr.value);
@@ -287,9 +288,9 @@ export class HeiferEmitter implements Emitter {
 
       case 'Lambda': {
         const params = expr.params.join(' ');
-        const specBlock = this.emitSpecBlock(expr.spec);
+        const specBlock = expr.spec ? this.emitSpecBlock(expr.spec) : '';
         const body = this.emitExpr(expr.body, depth + 1);
-        return `(fun ${params}${specBlock}\n${indent}  -> ${body})`;
+        return `(fun ${params}${specBlock} -> ${body})`;
       }
     }
   }
@@ -325,7 +326,26 @@ export class HeiferEmitter implements Emitter {
     if (func === 'deref' && args.length === 1) return `!${args[0]}`;
     if (func === 'assign' && args.length === 2) return `(${args[0]} := ${args[1]})`;
 
-    // Field read/write (from walker translation)
+    // String/int conversion
+    if (func === 'String' && args.length === 1) return `(string_of_int ${args[0]})`;
+    if (func === 'parseInt' && args.length >= 1) return `(int_of_string ${args[0]})`;
+
+    // Truthy negation: !xs in TS → xs = [] (null/empty check for lists)
+    if (func === 'not_truthy' && args.length === 1) return `(${args[0]} = [])`;
+
+    // Negation arithmetic
+    if (func === 'op_!' && args.length === 1) return `(not ${args[0]})`;
+
+    // Field read/write: .val is OCaml ref dereference/assignment
+    // Obj.magic is needed for type-changing stores (e.g. int ref -> str ref)
+    if (func === 'read_field_val' && args.length === 1) return `!${args[0]}`;
+    if (func === 'write_field_val' && args.length === 2) return `(${args[0]} := Obj.magic ${args[1]})`;
+
+    // List traversal fields
+    if (func === 'read_field_next' && args.length === 1) return `(List.tl ${args[0]})`;
+    if (func === 'read_field_hd' && args.length === 1) return `(List.hd ${args[0]})`;
+
+    // Other field read/write
     if (func.startsWith('read_field_')) {
       const prop = func.slice('read_field_'.length);
       return args.length === 1 ? `${args[0]}.${prop}` : `(${args[0]}.${prop})`;
@@ -334,6 +354,9 @@ export class HeiferEmitter implements Emitter {
       const prop = func.slice('write_field_'.length);
       return `(${args[0]}.${prop} <- ${args[1]})`;
     }
+
+    // List cons cell
+    if (func === 'cons_cell' && args.length === 2) return `(${args[0]} :: ${args[1]})`;
 
     // General function application (curried OCaml style)
     if (args.length === 0) return func;

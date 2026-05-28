@@ -6,6 +6,27 @@ import { extractFunctions, emitOCaml, type VerifyResult } from "@/lib/pipeline"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 
+const DEMO_IMPL_OCAML = `let plus x y
+(*@ req x:#int /\\ y:#int; ens res:#int @*)
+= (x + y)
+
+let inc_inplace x
+(*@ req x->#Ref[int]; ens x->#Ref[str] @*)
+= let _t0 = !x in
+let _t1 = (_t0 + 1) in
+let _t2 = (string_of_int _t1) in
+(x := Obj.magic _t2)
+
+let swap x y
+(*@ req x->#Ref[a'] /\\ x=y; ens x->#Ref[a'] /\\ x=y
+  $ req x->#Ref[a'] * y->#Ref[b']; ens x->#Ref[b'] * y->#Ref[a'] @*)
+= let v1 = !x in
+let v2 = !y in
+(x := Obj.magic v2);
+(y := Obj.magic v1)`
+
+type OcamlMode = "stub" | "impl"
+
 function LoadingDots() {
   return (
     <span className="inline-flex gap-1">
@@ -26,9 +47,9 @@ export function LiveDemo() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [selectedExample, setSelectedExample] = useState("custom")
+  const [ocamlMode, setOcamlMode] = useState<OcamlMode>("stub")
 
   const verify = useCallback(async () => {
-    // Use pre-computed results for known examples (works on Vercel without OCaml)
     if (selectedExample === "custom") {
       const { fileLevel, entries } = extractFunctions(code)
       const ocaml = emitOCaml(fileLevel, entries)
@@ -43,7 +64,6 @@ export function LiveDemo() {
       return
     }
 
-    // Custom code: try the live API
     setLoading(true)
     setError(null)
     setResult(null)
@@ -81,6 +101,18 @@ export function LiveDemo() {
 
   const total = result ? result.passed.length + result.failed.length : 0
   const allPass = result && total > 0 && result.failed.length === 0
+
+  // Determine which OCaml to show
+  const getDisplayedOcaml = () => {
+    if (ocamlMode === "impl") {
+      if (selectedExample === "custom") return DEMO_IMPL_OCAML
+      const ex = EXAMPLES.find((e) => e.id === selectedExample)
+      return ex?.implOcaml ?? result?.ocaml
+    }
+    return result?.ocaml
+  }
+
+  const displayedOcaml = getDisplayedOcaml()
 
   return (
     <section className="border-b border-border/40 px-6 py-16">
@@ -136,7 +168,6 @@ export function LiveDemo() {
               {allPass ? `${total}/${total} passed` : `${result.failed.length}/${total} failed`}
             </Badge>
           )}
-
         </div>
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -163,20 +194,41 @@ export function LiveDemo() {
 
           {/* OCaml output + results */}
           <div className="flex flex-col gap-4">
-            {/* OCaml */}
+            {/* OCaml panel with stub/impl toggle */}
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Emitted OCaml
                 </span>
-                <Badge variant="outline" className="text-xs font-mono">
-                  .ml
-                </Badge>
+                <div className="flex items-center gap-1 rounded-md border border-border/60 bg-muted/30 p-0.5">
+                  <button
+                    onClick={() => setOcamlMode("stub")}
+                    className={`rounded px-2 py-0.5 text-xs font-mono transition-colors ${
+                      ocamlMode === "stub"
+                        ? "bg-card text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    stub
+                  </button>
+                  <button
+                    onClick={() => setOcamlMode("impl")}
+                    className={`rounded px-2 py-0.5 text-xs font-mono transition-colors ${
+                      ocamlMode === "impl"
+                        ? "bg-card text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    impl
+                  </button>
+                </div>
               </div>
               <pre className="h-44 overflow-auto rounded-lg border border-border/60 bg-card p-4 font-mono text-sm text-muted-foreground leading-relaxed">
-                {result?.ocaml ?? (
+                {displayedOcaml ?? (
                   <span className="italic text-muted-foreground/50">
-                    Click Verify to see emitted OCaml stubs
+                    {ocamlMode === "stub"
+                      ? "Click Verify to see emitted OCaml stubs"
+                      : "Select an example or click Verify to see OCaml implementation"}
                   </span>
                 )}
               </pre>
