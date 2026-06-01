@@ -199,6 +199,10 @@ export class HeiferEmitter implements Emitter {
         const args = type.args.length > 0 ? `(${type.args.map(a => this.emitTypeInSpec(a)).join(', ')})` : '';
         return `${type.name}${args}`;
       }
+      case 'RecordType': {
+        const fs = type.fields.map(f => `${f.name}:${this.emitTypeInSpec(f.type)}`).join(', ');
+        return `Rec(${fs})`;
+      }
       default: return this.emitType(type);
     }
   }
@@ -241,6 +245,11 @@ export class HeiferEmitter implements Emitter {
       case 'AndType': return this.emitType(type.left);   // and-types collapse to left in OCaml
       case 'OrType': return "'a";
       case 'NotType': return "'a";
+      case 'RecordType': {
+        // OCaml inline record type annotation — used in let bindings only
+        const fs = type.fields.map(f => `${f.name}: ${this.emitType(f.type)}`).join('; ');
+        return `{ ${fs} }`;
+      }
     }
   }
 
@@ -293,6 +302,11 @@ export class HeiferEmitter implements Emitter {
         const specBlock = expr.spec ? this.emitSpecBlock(expr.spec) : '';
         const body = this.emitExpr(expr.body, depth + 1);
         return `(fun ${params}${specBlock} -> ${body})`;
+      }
+
+      case 'Record': {
+        const fs = expr.fields.map(f => `${f.name} = ${f.value}`).join('; ');
+        return `{ ${fs} }`;
       }
     }
   }

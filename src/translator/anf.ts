@@ -96,6 +96,27 @@ export class ANFConverter {
         return this.toANF(expr.arg as unknown as CoreExpr);
       }
 
+      case 'Record': {
+        const bindings: { varName: string; expr: CoreExpr }[] = [];
+        const normFields = expr.fields.map(f => {
+          const valExpr = f.value as unknown as CoreExpr;
+          if (valExpr.kind === 'Var') return { name: f.name, value: valExpr.name };
+          if (valExpr.kind === 'Const' && typeof valExpr.value !== 'string') {
+            return { name: f.name, value: String(valExpr.value) };
+          }
+          const normVal = this.toANF(valExpr);
+          if (normVal.kind === 'Var') return { name: f.name, value: normVal.name };
+          const v = this.freshVar();
+          bindings.push({ varName: v, expr: normVal });
+          return { name: f.name, value: v };
+        });
+        let result: CoreExpr = AST.recordExpr(normFields);
+        for (let i = bindings.length - 1; i >= 0; i--) {
+          result = this.makeLet(bindings[i].varName, bindings[i].expr, result);
+        }
+        return result;
+      }
+
       case 'Match': {
         const normBranches = expr.branches.map(b => ({
           pattern: b.pattern,

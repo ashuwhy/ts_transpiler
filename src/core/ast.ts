@@ -67,7 +67,8 @@ export type CoreExpr =
   | CallExpr
   | CastExpr
   | MatchExpr
-  | LambdaExpr;
+  | LambdaExpr
+  | RecordExpr;
 
 export interface VarExpr    { kind: 'Var';    name: string }
 export interface ConstExpr  { kind: 'Const';  value: number | string | boolean }
@@ -115,6 +116,12 @@ export interface MatchBranch {
   body: CoreExpr;
 }
 
+/** { f₁=x₁, … } — record literal; fields are variable names (ANF guarantee) */
+export interface RecordExpr {
+  kind: 'Record';
+  fields: { name: string; value: string }[];   // value is a variable name
+}
+
 /** λ x* . e :: λ x* r . Φ[r] */
 export interface LambdaExpr {
   kind: 'Lambda';
@@ -141,9 +148,10 @@ export type BaseType =
   | { kind: 'AnyPType' }                               // AnyP  (universe of pure types)
   | { kind: 'BotType' }                                // ⊥
   | { kind: 'TopType' }                                // ⊤
-  | { kind: 'ConstrType'; name: string; args: Type[] } // C(t₁…tₙ)  e.g. Cons(T, List(T))
-  | { kind: 'PredType';   name: string; args: Type[] } // pred(t₁…tₙ)  e.g. List(T, n)
-  | { kind: 'TypeVar';    name: string };               // type variable T
+  | { kind: 'ConstrType';  name: string; args: Type[] }                         // C(t₁…tₙ)
+  | { kind: 'PredType';    name: string; args: Type[] }                         // pred(t₁…tₙ)
+  | { kind: 'TypeVar';     name: string }                                        // type variable T
+  | { kind: 'RecordType';  fields: { name: string; type: Type }[] };            // { f₁:t₁, … }
 
 export type PrimTypeName = 'Bool' | 'Int' | 'Str' | 'Unit';
 
@@ -309,6 +317,9 @@ export const AST = {
   constrType:    (name: string, args: Type[]): BaseType => ({ kind: 'ConstrType', name, args }),
   predType:      (name: string, args: Type[]): BaseType => ({ kind: 'PredType', name, args }),
   typeVar:       (name: string): BaseType   => ({ kind: 'TypeVar', name }),
+  recordType:    (fields: { name: string; type: Type }[]): BaseType => ({ kind: 'RecordType', fields }),
+
+  recordExpr:    (fields: { name: string; value: string }[]): RecordExpr => ({ kind: 'Record', fields }),
 
   sepType:       (inner: BaseType): Type    => ({ kind: 'SepType', inner }),
   arrowType:     (from: Type, to: Type): Type => ({ kind: 'ArrowType', from, to }),

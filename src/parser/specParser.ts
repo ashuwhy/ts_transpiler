@@ -696,6 +696,21 @@ export class SpecParser {
         this.expect('RBRACE');
         return AST.singletonConst(Number(valTok.value));
       }
+      // Record type { f: T, … } — identifier followed by colon
+      if (valTok.type === 'IDENTIFIER' &&
+          this.pos + 1 < this.tokens.length &&
+          this.tokens[this.pos + 1].type === 'COLON') {
+        const fields: { name: string; type: Type }[] = [];
+        do {
+          const fname = this.expect('IDENTIFIER').value;
+          this.expect('COLON');
+          const ftype = this.parseType();
+          fields.push({ name: fname, type: ftype });
+        } while (this.match('COMMA'));
+        this.expect('RBRACE');
+        return AST.recordType(fields);
+      }
+      // Singleton variable {x}
       if (valTok.type === 'IDENTIFIER') {
         this.next();
         this.expect('RBRACE');

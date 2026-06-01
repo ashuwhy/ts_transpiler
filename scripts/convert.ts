@@ -12,7 +12,7 @@ import fs from 'fs';
 import path from 'path';
 import { spawnSync } from 'child_process';
 import { fileURLToPath } from 'url';
-import { ASTWalker } from '../src/translator/walker.js';
+import { ASTWalker, normalizeRecordSyntax } from '../src/translator/walker.js';
 import { HeiferEmitter } from '../src/emitter/heiferEmitter.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -83,7 +83,9 @@ function emitStubOCaml(fileLevel: FileLevel, entries: FuncEntry[]): string {
     const caseCount = Math.max(fn.reqs.length, fn.enss.length, 1);
     const cases: string[] = [];
     for (let i = 0; i < caseCount; i++) {
-      cases.push(`req ${fn.reqs[i] ?? 'emp'}; ens ${fn.enss[i] ?? 'emp'}`);
+      const req = normalizeRecordSyntax(fn.reqs[i] ?? 'emp');
+      const ens = normalizeRecordSyntax(fn.enss[i] ?? 'emp');
+      cases.push(`req ${req}; ens ${ens}`);
     }
     const casesStr = cases.join('\n  $ ');
     const specBody = fn.forall ? `forall ${fn.forall} ${casesStr}` : casesStr;

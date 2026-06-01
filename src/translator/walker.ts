@@ -7,6 +7,26 @@ import { SpecParser } from '../parser/specParser.js';
 
 import { ANFConverter } from './anf.js';
 
+/**
+ * Convert inline record syntax in spec strings to Heifer's constructor notation.
+ * Heifer uses `Name[arg1,arg2]` bracket syntax — no named fields, no `{`.
+ *
+ * `{ x: int, y: int }` → `Rec[int,int]`   (field names dropped, types kept)
+ * `{ x: t', y: s' }`   → `Rec[t',s']`     (type variables preserved)
+ *
+ * Open question for meeting: does Heifer support named field predicates?
+ */
+export function normalizeRecordSyntax(spec: string): string {
+  return spec.replace(/\{\s*([^{}]+?)\s*\}/g, (_match, inner: string) => {
+    const types = inner.split(',').map((part: string) => {
+      const colonIdx = part.indexOf(':');
+      // field:type pair → take the type part; otherwise use whole token
+      return (colonIdx >= 0 ? part.slice(colonIdx + 1) : part).trim();
+    });
+    return `Rec[${types.join(',')}]`;
+  });
+}
+
 export class ASTWalker {
   private sourceFile: ts.SourceFile;
 
@@ -89,8 +109,8 @@ export class ASTWalker {
         const req = specs.requires[i];
         const ens = specs.ensures[i];
         const parts: string[] = [];
-        if (req) parts.push(`req ${req}`);
-        if (ens) parts.push(`ens ${ens}`);
+        if (req) parts.push(`req ${normalizeRecordSyntax(req)}`);
+        if (ens) parts.push(`ens ${normalizeRecordSyntax(ens)}`);
         cases.push(parts.join('; '));
       }
       const casesStr = cases.join('\n  $ ');
@@ -251,24 +271,36 @@ export class ASTWalker {
       };
     }
 
-    // Object literals: {val: x} → ref x; {val: h, next: t} → h :: t (cons)
+    // Object literals — dispatch on shape:
+    //   {val: x}             → ref x        (single heap ref)
+    //   {val: h, next: t}    → h :: t       (list cons cell)
+    //   {f1: v1, f2: v2, …}  → RecordExpr   (general record)
     if (ts.isObjectLiteralExpression(node)) {
       const props: Record<string, CoreExpr> = {};
+      const orderedKeys: string[] = [];
       for (const prop of node.properties) {
         if (ts.isPropertyAssignment(prop)) {
           const key = prop.name.getText(this.sourceFile);
           props[key] = this.walkExpression(prop.initializer);
+          orderedKeys.push(key);
+        } else if (ts.isShorthandPropertyAssignment(prop)) {
+          // { x, y } shorthand → treat as { x: x, y: y }
+          const key = prop.name.text;
+          props[key] = AST.varExpr(key);
+          orderedKeys.push(key);
         }
       }
-      if (props['val'] && props['next']) {
-        // Cons cell: head :: tail
-        return { kind: 'Call', func: 'cons_cell', args: [props['val'], props['next']] as any };
-      }
-      if (props['val']) {
-        // Heap ref allocation: ref val
+      if (orderedKeys.length === 1 && props['val']) {
         return { kind: 'Call', func: 'ref', args: [props['val']] as any };
       }
-      return AST.constExpr(0);
+      if (orderedKeys.length === 2 && props['val'] && props['next']) {
+        return { kind: 'Call', func: 'cons_cell', args: [props['val'], props['next']] as any };
+      }
+      // General record — ANF will lift field values to variables
+      return {
+        kind: 'Record',
+        fields: orderedKeys.map(k => ({ name: k, value: props[k] as any }))
+      } as any;
     }
 
     if (ts.isNewExpression(node)) {
@@ -297,16 +329,39 @@ export class ASTWalker {
     }
 
     if (ts.isAsExpression(node) || ts.isTypeAssertionExpression(node)) {
-      // x as T or <T>x
       const expr = ts.isAsExpression(node) ? node.expression : node.expression;
-      const typeStr = ts.isAsExpression(node) ? node.type.getText(this.sourceFile) : node.type.getText(this.sourceFile);
-      
+      const typeNode = ts.isAsExpression(node) ? node.type : node.type;
+
+      // x as { f: T, … } → Cast to RecordType
+      if (ts.isTypeLiteralNode(typeNode)) {
+        const fields: { name: string; type: Type }[] = [];
+        for (const member of typeNode.members) {
+          if (ts.isPropertySignature(member) && member.type) {
+            const fname = member.name.getText(this.sourceFile);
+            try {
+              const ftype = SpecParser.parseTypeStr(member.type.getText(this.sourceFile));
+              fields.push({ name: fname, type: ftype });
+            } catch {
+              fields.push({ name: fname, type: AST.anyType() });
+            }
+          }
+        }
+        if (fields.length > 0) {
+          return {
+            kind: 'Cast',
+            targetType: AST.recordType(fields),
+            arg: this.walkExpression(expr) as any
+          };
+        }
+      }
+
+      const typeStr = typeNode.getText(this.sourceFile);
       try {
         const parsedType = SpecParser.parseTypeStr(typeStr);
         return {
           kind: 'Cast',
           targetType: parsedType,
-          arg: this.walkExpression(expr) as any // temporary nested arg, anf.ts lifts it
+          arg: this.walkExpression(expr) as any
         };
       } catch {
         return this.walkExpression(expr);

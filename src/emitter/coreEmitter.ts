@@ -92,6 +92,11 @@ export class CoreEmitter implements Emitter {
           : '';
         return `λ ${paramsList} . ${this.emitExpr(expr.body)}${specStr}`;
       }
+
+      case 'Record': {
+        const fs = expr.fields.map(f => `${f.name} = ${f.value}`).join(', ');
+        return `{ ${fs} }`;
+      }
     }
   }
 
@@ -187,6 +192,10 @@ export class CoreEmitter implements Emitter {
       case 'OrType': return `(${this.emitType(type.left)} ∨ ${this.emitType(type.right)})`;
       case 'NotType': return `¬(${this.emitType(type.inner)})`;
       case 'WildcardType': return '_';
+      case 'RecordType': {
+        const fs = type.fields.map(f => `${f.name}: ${this.emitType(f.type)}`).join(', ');
+        return `{ ${fs} }`;
+      }
     }
   }
 
